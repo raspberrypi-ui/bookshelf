@@ -48,9 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define COVER_SIZE 128
 
-#define CACHE_PATH  "/.cache/bookshelf/"
-#define PDF_PATH    "/MagPi/"
-#define HOST_SITE   "https://magazines-static.raspberrypi.org"
+#define CACHE_PATH      "/.cache/bookshelf/"
+#define PDF_PATH        "/MagPi/"
+#define HOST_SITE       "https://magazines-static.raspberrypi.org"
+#define DOWNLOAD_CMD    "curl -s"
 
 /* Columns in packages and categories list stores */
 
@@ -78,6 +79,8 @@ static GtkWidget *err_dlg, *err_msg, *err_btn;
 
 GtkListStore *items;
 GtkTreeIter selitem;
+
+guint pulse_timer;
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
@@ -160,7 +163,7 @@ void *update_covers (void *param)
         lpath = get_local_path (path, CACHE_PATH);
         if (access (lpath, F_OK) == -1)
         {
-            cmd = g_strdup_printf ("curl %s%s > %s", HOST_SITE, path, lpath);
+            cmd = g_strdup_printf ("%s %s%s > %s", DOWNLOAD_CMD, HOST_SITE, path, lpath);
             system (cmd);
             g_free (cmd);
         }
@@ -194,18 +197,28 @@ void open_pdf (char *path)
 }
 
 
+gboolean pb_pulse (gpointer data)
+{
+    gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+    return TRUE;
+}
+
+
 void *do_download (void *data)
 {
     gchar *cmd, *lpath, *path, *cpath, *ppath;
     GdkPixbuf *cover;
 
+    //pulse_timer = g_timeout_add (250, pb_pulse, NULL);
+
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &path, ITEM_PDFPATH, &ppath, -1);
     lpath = get_local_path (ppath, PDF_PATH);
     cpath = get_local_path (path, CACHE_PATH);
 
-    cmd = g_strdup_printf ("curl %s%s > %s", HOST_SITE, ppath, lpath);
+    cmd = g_strdup_printf ("%s %s%s > %s", DOWNLOAD_CMD, HOST_SITE, ppath, lpath);
     system (cmd);
 
+    //g_source_remove (pulse_timer);
     gtk_widget_destroy (GTK_WIDGET (msg_dlg));
     msg_dlg = NULL;
 
