@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+_Name=Bookshelf
+_GenericName=Bookshelf
+_Comment=Download and read Raspberry Pi Press publications
+Icon=rpi
+Exec=rp-bookshelf
+NotShowIn=GNOME;XFCE;
+StartupNotify=true
+Categories=Help;
