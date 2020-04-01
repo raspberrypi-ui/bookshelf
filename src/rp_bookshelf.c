@@ -196,54 +196,50 @@ void open_pdf (char *path)
 
 void *do_download (void *data)
 {
-    gchar *cmd, *lpath, *path, *cpath;
+    gchar *cmd, *lpath, *path, *cpath, *ppath;
     GdkPixbuf *cover;
 
-    lpath = get_local_path ((gchar *) data, PDF_PATH);
-    cmd = g_strdup_printf ("curl %s%s > %s", HOST_SITE, (gchar *) data, lpath);
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &path, ITEM_PDFPATH, &ppath, -1);
+    lpath = get_local_path (ppath, PDF_PATH);
+    cpath = get_local_path (path, CACHE_PATH);
+
+    cmd = g_strdup_printf ("curl %s%s > %s", HOST_SITE, ppath, lpath);
     system (cmd);
 
     gtk_widget_destroy (GTK_WIDGET (msg_dlg));
     msg_dlg = NULL;
 
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &path, -1);
-    cpath = get_local_path (path, CACHE_PATH);
+    open_pdf (lpath);
+
     cover = get_cover (cpath);
     gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 1, -1);
     gtk_widget_queue_draw (items_iv);
-            
-    open_pdf (lpath);
 
-    g_free (cpath);
-    g_free (path);
     g_free (cmd);
     g_free (lpath);
-    g_free ((gchar *) data);
+    g_free (cpath);
+    g_free (ppath);
+    g_free (path);
 
     return NULL;
 }
 
 
-void download_pdf (char *path)
-{
-    pthread_t download_thread;
-    gchar *tpath = g_strdup (path);
-    message (_("Downloading PDF - please wait..."), 0 , -1);
-    pthread_create (&download_thread, NULL, do_download, tpath);
-}
-
-
 void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
 {
-    //GtkTreeIter item;
     gchar *lpath, *fpath;
+    pthread_t download_thread;
 
     gtk_tree_model_get_iter (GTK_TREE_MODEL (items), &selitem, path);
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &fpath, -1);
 
     lpath = get_local_path (fpath, PDF_PATH);
 
-    if (access (lpath, F_OK) == -1) download_pdf (fpath);
+    if (access (lpath, F_OK) == -1)
+    {
+        message (_("Downloading PDF - please wait..."), 0 , -1);
+        pthread_create (&download_thread, NULL, do_download, NULL);
+    }
     else open_pdf (lpath);
 
     g_free (fpath);
