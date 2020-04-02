@@ -52,7 +52,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
-#define HOST_SITE       "https://magazines-static.raspberrypi.org"
 #define DOWNLOAD_CMD    "curl -s"
 
 /* Columns in packages and categories list stores */
@@ -117,18 +116,15 @@ int progress_func(GtkWidget *bar, double t, double d, double ultotal, double uln
 
 void start_curl_download (char *url, char *file)
 {
-    char *fullurl = g_strdup_printf ("%s%s", HOST_SITE, url);
-
     http_handle = curl_easy_init ();
     multi_handle = curl_multi_init ();
 
     outfile = fopen (file, "wb");
 
-    curl_easy_setopt (http_handle, CURLOPT_URL, fullurl);
+    curl_easy_setopt (http_handle, CURLOPT_URL, url);
     curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
     curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt (http_handle, CURLOPT_PROGRESSFUNCTION, progress_func);
-    curl_easy_setopt (http_handle, CURLOPT_PROGRESSDATA, msg_pb);
 
     curl_multi_add_handle (multi_handle, http_handle);
 
@@ -241,7 +237,7 @@ void *update_covers (void *param)
         lpath = get_local_path (path, CACHE_PATH);
         if (access (lpath, F_OK) == -1)
         {
-            cmd = g_strdup_printf ("%s %s%s > %s", DOWNLOAD_CMD, HOST_SITE, path, lpath);
+            cmd = g_strdup_printf ("%s %s > %s", DOWNLOAD_CMD, path, lpath);
             system (cmd);
             g_free (cmd);
         }
