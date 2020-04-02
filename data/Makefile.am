@@ -3,7 +3,8 @@ uidir = $(datadir)/rp-bookshelf
 ui_in_files = rp_bookshelf.ui \
 				nocover.png \
 				cloud.png \
-				grey.png
+				grey.png \
+				cat.xml
 	
 ui_DATA = $(ui_in_files)
 

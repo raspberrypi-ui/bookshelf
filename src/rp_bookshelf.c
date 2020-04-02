@@ -50,9 +50,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define COVER_SIZE 128
 
+#define CATALOGUE_URL   "https://magazines-static.raspberrypi.org/cat.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
-#define DOWNLOAD_CMD    "curl -s"
 
 /* Columns in packages and categories list stores */
 
@@ -70,13 +70,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CAT_HSPACE          2
 #define CAT_WFRAME          3
 
+/*----------------------------------------------------------------------------*/
+/* Globals                                                                    */
+/*----------------------------------------------------------------------------*/
+
 /* Controls */
 
 static GtkWidget *main_dlg, *items_iv, *install_btn;
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_cancel, *msg_pbv;
 static GtkWidget *err_dlg, *err_msg, *err_btn;
 
-GdkPixbuf *cloud, *grey;
+/* Preloaded default pixbufs */
+
+static GdkPixbuf *cloud, *grey;
 
 /* Data store for icon grid */
 
@@ -84,122 +90,51 @@ GtkListStore *items;
 GtkTreeIter selitem;
 GtkTreeIter covitem;
 
+/* Catalogue file path */
+
+char *catpath;
+
 /* Libcurl variables */
 
 CURL *http_handle;
 CURLM *multi_handle;
 FILE *outfile;
+void (*term_fn) (int success);
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
 /*----------------------------------------------------------------------------*/
 
-static gboolean update_self (gpointer data);
-static void read_data_file (void);
+static char *get_local_path (char *path, const char *dir);
+static char *get_shell_string (char *cmd);
+static gboolean net_available (void);
+static void start_curl_download (char *url, char *file, int progress, void (*end_fn)(int success));
+static gboolean curl_poll (gpointer data);
+static void finish_curl_download (int success);
+static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
+static GdkPixbuf *get_cover (const char *filename);
+static void update_cover_entry (char *lpath, int dl);
+static gboolean find_cover_for_item (gpointer data);
+static void image_download_done (int success);
+static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
+static void open_pdf (char *path);
+static void pdf_download_done (int success);
+static gboolean get_catalogue (gpointer data);
+static void catalogue_download_done (int success);
+static void get_param (char *linebuf, char *name, char **dest);
+static int read_data_file (char *path);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
 static void error_box (char *msg);
 static void message (char *msg, int wait, int prog);
-static char *get_shell_string (char *cmd);
-static gboolean net_available (void);
 static void cancel (GtkButton* btn, gpointer ptr);
-char *get_local_path (char *path, const char *dir);
-GdkPixbuf *get_cover (const char *filename);
-void open_pdf (char *path);
-void start_curl_download (char *url, char *file);
-gboolean curl_poll (gpointer data);
-void finish_curl_download (void);
-void start_curl_image_download (char *url, char *file);
-gboolean curl_im_poll (gpointer data);
-void finish_curl_image_download (void);
-
-
-int progress_func(GtkWidget *bar, double t, double d, double ultotal, double ulnow)
-{
-  if (d > 0.0) gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), d/t);
-  return 0;
-}
-
-
-void start_curl_download (char *url, char *file)
-{
-    http_handle = curl_easy_init ();
-    multi_handle = curl_multi_init ();
-
-    outfile = fopen (file, "wb");
-
-    curl_easy_setopt (http_handle, CURLOPT_URL, url);
-    curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
-    curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
-    curl_easy_setopt (http_handle, CURLOPT_PROGRESSFUNCTION, progress_func);
-
-    curl_multi_add_handle (multi_handle, http_handle);
-
-    g_timeout_add (250, curl_poll, NULL);
-}
-
-gboolean curl_poll (gpointer data)
-{
-    int still_running;
-    curl_multi_perform (multi_handle, &still_running);
-    if (still_running) return TRUE;
-    finish_curl_download ();
-    return FALSE;
-}
-
-void finish_curl_download (void)
-{
-    gchar *cpath, *fpath, *lpath, *clpath;
-
-    fclose (outfile);
-
-    curl_multi_remove_handle (multi_handle, http_handle);
-    curl_easy_cleanup (http_handle);
-    curl_multi_cleanup (multi_handle);
-    curl_global_cleanup ();
-
-    gtk_widget_destroy (GTK_WIDGET (msg_dlg));
-    msg_dlg = NULL;
-
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &fpath, -1);
-    lpath = get_local_path (fpath, PDF_PATH);
-    clpath = get_local_path (cpath, CACHE_PATH);
-    open_pdf (lpath);
-
-    GdkPixbuf *cover = get_cover (clpath);
-    gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 1, -1);
-    gtk_widget_queue_draw (items_iv);
-
-    g_free (lpath);
-    g_free (cpath);
-    g_free (clpath);
-    g_free (fpath);
-}
 
 /*----------------------------------------------------------------------------*/
-/* Handlers for asynchronous initialisation sequence at start                 */
+/* Helpers                                                                    */
 /*----------------------------------------------------------------------------*/
 
-static gboolean update_self (gpointer data)
-{
+/* get_local_path - creates a string with path to file in user's home dir */
 
-    message (_("Reading list of publications - please wait..."), 0 , -1);
-    
-    // check the cache folder exists
-    // set path for user
-    
-    // get the XML file - assume already in cache for now
-    
-    //system ("curl https://magpi.raspberrypi.org/ > /home/pi/.cache/bookshelf/front.html");
-    //system ("curl https://magpi.raspberrypi.org/issues > /home/pi/.cache/bookshelf/issues.html");
-    //system ("curl https://magpi.raspberrypi.org/books > /home/pi/.cache/bookshelf/books.html");
-    
-    read_data_file ();
-
-    return FALSE;
-}
-
-
-char *get_local_path (char *path, const char *dir)
+static char *get_local_path (char *path, const char *dir)
 {
     gchar *basename = g_path_get_basename (path);
     gchar *rpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), dir, basename);
@@ -207,8 +142,113 @@ char *get_local_path (char *path, const char *dir)
     return rpath;
 }
 
+/* get_shell_string - read a string in response to a shell command */
 
-GdkPixbuf *get_cover (const char *filename)
+static char *get_shell_string (char *cmd)
+{
+    char *line = NULL, *res = NULL;
+    size_t len = 0;
+    FILE *fp = popen (cmd, "r");
+
+    if (fp == NULL) return g_strdup ("");
+    if (getline (&line, &len, fp) > 0)
+    {
+        g_strdelimit (line, "\n\r", 0);
+        res = line;
+        while (*res++) if (g_ascii_isspace (*res)) *res = 0;
+        res = g_strdup (line);
+    }
+    pclose (fp);
+    g_free (line);
+    return res ? res : g_strdup ("");
+}
+
+/* net_available - determine whether there is a current network connection */
+
+static gboolean net_available (void)
+{
+    char *ip;
+    gboolean val = FALSE;
+
+    ip = get_shell_string ("hostname -I | tr ' ' \\\\n | grep \\\\. | tr \\\\n ','");
+    if (ip)
+    {
+        if (strlen (ip)) val = TRUE;
+        g_free (ip);
+    }
+    return val;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* libcurl interface                                                          */
+/*----------------------------------------------------------------------------*/
+
+static void start_curl_download (char *url, char *file, int progress, void (*end_fn)(int success))
+{
+    term_fn = end_fn;
+    http_handle = curl_easy_init ();
+    multi_handle = curl_multi_init ();
+
+    outfile = fopen (file, "wb");
+    if (!outfile) end_fn (0);
+
+    curl_easy_setopt (http_handle, CURLOPT_URL, url);
+    curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
+    if (progress)
+    {
+        curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
+        curl_easy_setopt (http_handle, CURLOPT_PROGRESSFUNCTION, progress_func);
+    }
+    else curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 1L);
+
+    curl_multi_add_handle (multi_handle, http_handle);
+
+    g_timeout_add (100, curl_poll, NULL);
+}
+
+static gboolean curl_poll (gpointer data)
+{
+    int still_running;
+    if (curl_multi_perform (multi_handle, &still_running) != CURLE_OK)
+    {
+        finish_curl_download (0);
+        return FALSE;
+    }
+    if (still_running) return TRUE;
+    else
+    {
+        finish_curl_download (1);
+        return FALSE;
+    }
+}
+
+static void finish_curl_download (int success)
+{
+    if (outfile) fclose (outfile);
+
+    curl_multi_remove_handle (multi_handle, http_handle);
+    curl_easy_cleanup (http_handle);
+    curl_multi_cleanup (multi_handle);
+    curl_global_cleanup ();
+
+    term_fn (success);
+}
+
+static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow)
+{
+  if (d > 0.0) gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), d/t);
+  return 0;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* Cover art handling                                                         */
+/*----------------------------------------------------------------------------*/
+
+/* get_cover - reads in cover from filename to pixbuf and scales */
+
+static GdkPixbuf *get_cover (const char *filename)
 {
     GdkPixbuf *pb, *spb;
     int w, h;
@@ -225,48 +265,9 @@ GdkPixbuf *get_cover (const char *filename)
     return spb;
 }
 
+/* update_cover_entry - uses the cover at lpath to update the cover info for covitem */
 
-void *update_covers (void *param)
-{
-    GtkTreeIter item;
-    gboolean valid;
-    gchar *path, *lpath, *cmd;
-    GdkPixbuf *cover, *cloud, *grey;
-    int dl, w, h;
-    cloud = get_cover (PACKAGE_DATA_DIR "/cloud.png");
-    grey = get_cover (PACKAGE_DATA_DIR "/grey.png");
-
-    valid = gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &item);
-    while (valid)
-    {
-        gtk_tree_model_get (GTK_TREE_MODEL (items), &item, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
-        lpath = get_local_path (path, CACHE_PATH);
-        if (access (lpath, F_OK) == -1)
-        {
-            cmd = g_strdup_printf ("%s %s > %s", DOWNLOAD_CMD, path, lpath);
-            system (cmd);
-            g_free (cmd);
-        }
-        cover = get_cover (lpath);
-        if (!dl)
-        {
-            w = gdk_pixbuf_get_width (cover);
-            h = gdk_pixbuf_get_height (cover);
-            gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-            gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
-        }
-        gtk_list_store_set (items, &item, ITEM_COVER, cover, -1);
-        g_object_unref (cover);
-        g_free (lpath);
-        g_free (path);
-
-        valid = gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &item);
-    }
-    gtk_widget_queue_draw (items_iv);
-    return NULL;
-}
-
-void update_cover_entry (char *lpath, int dl)
+static void update_cover_entry (char *lpath, int dl)
 {
     int w, h;
     GdkPixbuf *cover = get_cover (lpath);
@@ -281,7 +282,9 @@ void update_cover_entry (char *lpath, int dl)
     g_object_unref (cover);
 }
 
-gboolean get_cover_for_item (gpointer data)
+/* get_cover_for_item - tries to load cover for covitem from local cache; starts download if not */
+
+static gboolean find_cover_for_item (gpointer data)
 {
     int dl;
     gchar *path, *lpath;
@@ -303,49 +306,18 @@ gboolean get_cover_for_item (gpointer data)
     }
     else
     {
-        start_curl_image_download (path, lpath);
+        start_curl_download (path, lpath, 0, image_download_done);
         return FALSE;
     }
 }
 
+/* image_download_done - called on completed curl image download */
 
-void start_curl_image_download (char *url, char *file)
-{
-    http_handle = curl_easy_init ();
-    multi_handle = curl_multi_init ();
-
-    outfile = fopen (file, "wb");
-
-    curl_easy_setopt (http_handle, CURLOPT_URL, url);
-    curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
-    curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 1L);
-
-    curl_multi_add_handle (multi_handle, http_handle);
-
-    g_timeout_add (250, curl_im_poll, NULL);
-}
-
-gboolean curl_im_poll (gpointer data)
-{
-    int still_running;
-    curl_multi_perform (multi_handle, &still_running);
-    if (still_running) return TRUE;
-    finish_curl_image_download ();
-    return FALSE;
-}
-
-void finish_curl_image_download (void)
+static void image_download_done (int success)
 {
     gchar *lpath, *path;
     GdkPixbuf *cover;
     int dl;
-
-    fclose (outfile);
-
-    curl_multi_remove_handle (multi_handle, http_handle);
-    curl_easy_cleanup (http_handle);
-    curl_multi_cleanup (multi_handle);
-    curl_global_cleanup ();
 
     gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
     lpath = get_local_path (path, CACHE_PATH);
@@ -353,33 +325,20 @@ void finish_curl_image_download (void)
     g_free (lpath);
 
     if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem))
-       g_idle_add (get_cover_for_item, NULL);
+       g_idle_add (find_cover_for_item, NULL);
     else gtk_widget_queue_draw (items_iv);
 }
 
 
+/*----------------------------------------------------------------------------*/
+/* PDF handling                                                               */
+/*----------------------------------------------------------------------------*/
 
-void start_cover_load (void)
-{
-    if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &covitem))
-        g_idle_add (get_cover_for_item, NULL);
-}
+/* item_selected - called when icon is activated to open or download PDF */
 
-
-void open_pdf (char *path)
-{
-    if (fork () == 0)
-    {
-        dup2 (open ("/dev/null", O_WRONLY), STDERR_FILENO); // redirect stderr...
-        execl ("/usr/bin/qpdfview", "qpdfview", "--unique", "--quiet", path, NULL);
-    }
-}
-
-
-void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
+static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
 {
     gchar *lpath, *fpath;
-    pthread_t download_thread;
 
     gtk_tree_model_get_iter (GTK_TREE_MODEL (items), &selitem, path);
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &fpath, -1);
@@ -389,7 +348,7 @@ void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data
     if (access (lpath, F_OK) == -1)
     {
         message (_("Downloading - please wait..."), 0 , 0);
-        start_curl_download (fpath, lpath);
+        start_curl_download (fpath, lpath, 1, pdf_download_done);
     }
     else open_pdf (lpath);
 
@@ -397,8 +356,67 @@ void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data
     g_free (lpath);
 }
 
+/* open_pdf - launches qpdfview with supplied file */
 
-void get_param (char *linebuf, char *name, char **dest)
+static void open_pdf (char *path)
+{
+    if (fork () == 0)
+    {
+        dup2 (open ("/dev/null", O_WRONLY), STDERR_FILENO); // redirect stderr...
+        execl ("/usr/bin/qpdfview", "qpdfview", "--unique", "--quiet", path, NULL);
+    }
+}
+
+/* pdf_download_done - called on completed curl PDF download */
+
+static void pdf_download_done (int success)
+{
+    gchar *cpath, *fpath, *lpath, *clpath;
+
+    gtk_widget_destroy (GTK_WIDGET (msg_dlg));
+    msg_dlg = NULL;
+
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &fpath, -1);
+    lpath = get_local_path (fpath, PDF_PATH);
+    clpath = get_local_path (cpath, CACHE_PATH);
+    open_pdf (lpath);
+
+    GdkPixbuf *cover = get_cover (clpath);
+    gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 1, -1);
+    gtk_widget_queue_draw (items_iv);
+
+    g_free (lpath);
+    g_free (cpath);
+    g_free (clpath);
+    g_free (fpath);
+}
+
+
+/*----------------------------------------------------------------------------*/
+/* Catalogue management                                                       */
+/*----------------------------------------------------------------------------*/
+
+/* get_catalogue - find a catalogue file, either online or local */
+
+static gboolean get_catalogue (gpointer data)
+{
+    // check the cache and download folders exist; create them if not!!!!
+
+    message (_("Reading list of publications - please wait..."), 0 , 0);
+    catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
+    start_curl_download (CATALOGUE_URL, catpath, 1, catalogue_download_done);
+    return FALSE;
+}
+
+static void catalogue_download_done (int success)
+{
+    if (success && read_data_file (catpath)) return;
+    read_data_file (PACKAGE_DATA_DIR "/cat.xml");
+}
+
+/* get_param - helper function to look for tag in line */
+
+static void get_param (char *linebuf, char *name, char **dest)
 {
     char *p1, *p2;
     
@@ -411,19 +429,18 @@ void get_param (char *linebuf, char *name, char **dest)
     }
 }
 
+/* read_data_file - main file parser routine */
 
-static void read_data_file (void)
+static int read_data_file (char *path)
 {
     char *linebuf = NULL, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL;
     size_t nchars = 0;
     GtkTreeIter entry;
-    int category = -1, in_item = FALSE, downloaded;
-    pthread_t update_thread;
+    int category = -1, in_item = FALSE, downloaded, count = 0;
 
     GdkPixbuf *pb = get_cover (PACKAGE_DATA_DIR "/nocover.png");
 
-    // fix this path!
-    FILE *fp = fopen ("/home/pi/.cache/bookshelf/cat.xml", "rb");
+    FILE *fp = fopen (path, "rb");
     if (fp)
     {
         while (getline (&linebuf, &nchars, fp) != -1)
@@ -449,6 +466,7 @@ static void read_data_file (void)
                     g_free (desc);
                     g_free (covpath);
                     g_free (pdfpath);
+                    count++;
                 }
                 get_param (linebuf, "<TITLE>", &title);
                 get_param (linebuf, "<DESC>", &desc);
@@ -466,52 +484,20 @@ static void read_data_file (void)
         }
         fclose (fp);
     }
+
+    if (!count) return count;
+
     // else handle no file error here...
     gtk_widget_destroy (GTK_WIDGET (msg_dlg));
     msg_dlg = NULL;
     gtk_widget_set_sensitive (install_btn, TRUE);
 
-    //pthread_create (&update_thread, NULL, update_covers, NULL);
-    start_cover_load ();
+    // start loading covers
+    if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &covitem))
+        g_idle_add (find_cover_for_item, NULL);
+    return count;
 }
 
-
-
-
-
-
-static char *get_shell_string (char *cmd)
-{
-    char *line = NULL, *res = NULL;
-    size_t len = 0;
-    FILE *fp = popen (cmd, "r");
-
-    if (fp == NULL) return g_strdup ("");
-    if (getline (&line, &len, fp) > 0)
-    {
-        g_strdelimit (line, "\n\r", 0);
-        res = line;
-        while (*res++) if (g_ascii_isspace (*res)) *res = 0;
-        res = g_strdup (line);
-    }
-    pclose (fp);
-    g_free (line);
-    return res ? res : g_strdup ("");
-}
-
-static gboolean net_available (void)
-{
-    char *ip;
-    gboolean val = FALSE;
-
-    ip = get_shell_string ("hostname -I | tr ' ' \\\\n | grep \\\\. | tr \\\\n ','");
-    if (ip)
-    {
-        if (strlen (ip)) val = TRUE;
-        g_free (ip);
-    }
-    return val;
-}
 
 /*----------------------------------------------------------------------------*/
 /* Progress / error box                                                       */
@@ -579,7 +565,6 @@ static void error_box (char *msg)
     }
     else gtk_label_set_text (GTK_LABEL (err_msg), msg);
 }
-
 
 static void message (char *msg, int wait, int prog)
 {
@@ -710,7 +695,7 @@ int main (int argc, char *argv[])
     gtk_widget_show_all (main_dlg);
 
     // update application, load the data file and check with backend
-    if (net_available ()) g_idle_add (update_self, NULL);
+    if (net_available ()) g_idle_add (get_catalogue, NULL);
     else error_box (_("No network connection - bookshelf cannot be updated"));
 
     gtk_main ();

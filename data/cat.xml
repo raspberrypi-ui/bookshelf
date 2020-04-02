@@ -1,0 +1,242 @@
+<PUBS>
+    <MAGPI>
+        <ITEM>
+            <TITLE>Issue 92</TITLE>
+            <DESC>Your Raspberry Pi problems solved in the latest edition of The MagPi. Plus! Track local weather and pollution, add facial recognition to a magic mirror, and tweet with a hacked Morse code key.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/357/original/001_MagPi92_COVER-WEB.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/357/original/MagPi92.pdf</PDF>
+        </ITEM>
+         <ITEM>
+            <TITLE>Issue 91</TITLE>
+            <DESC>Get involved with #MonthOfMaking in The MagPi magazine issue 91. Plus! Eben Upton talks to us about the new entry-level Raspberry Pi 4 with 2GB RAM.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/352/original/001_MagPi91_COVER-WEB.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/352/original/MagPi91.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 90</TITLE>
+            <DESC>Get your free Raspberry Pi 4 Stand with the print edition of The MagPi issue #90. Plus! How to overclock Raspberry Pi 4 and the best cooling cases tested!</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/314/original/001_MagPi90_COVER-WEB.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/314/original/MagPi90.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 89</TITLE>
+            <DESC>Discover the best Raspberry Pi tips, tools, kits and gadgets in the latest edition of The MagPi magazine.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/308/original/MagPi89_COVER-WEB.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/308/original/MagPi89.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 88</TITLE>
+            <DESC>Rediscover retro computing and thermal-testing the new firmware. All in the latest edition of The MagPi magazine.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/302/original/001_MagPi88_COVER-WEB.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/302/original/MagPi88.pdf?1574867682</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 87</TITLE>
+            <DESC>Build a Raspberry Pi 4K Digital Media Hub with our feature-packed tutorial in the latest issue of The MagPi magazine. It’s the ideal practical project that makes superb use of the new power found in Raspberry Pi 4.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/261/original/001_MagPi87_COVER-WEB.png</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/261/original/MagPi87.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 86</TITLE>
+            <DESC>Inside the latest issue of The MagPi you’ll find 25 Powerful Raspberry Pi projects that really show what our favourite computer is capable of. You’ll learn to make autonomous yachts, AI sorting machines, radical robots, medical projects, space rovers, football bots, and more.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/223/original/86cover.png</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/223/original/MagPi86.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 85</TITLE>
+            <DESC>Can you do everything with a $55 computer? We’ve been pretty confident about using Raspberry Pi 4 with 4GB RAM as our main desktop PC. This month we put it to the test, by getting one of our best makers to use nothing but Raspberry Pi 4 for a week. And report back the results!</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/137/original/001_MagPi85_COVER.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/137/original/MagPi85.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 84</TITLE>
+            <DESC>Get your Raspberry Pi 4 Starter Guide in The MagPi magazine issue #84.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/138/original/001_Magpi84_COVER-Web.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/138/original/MagPi84.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 83</TITLE>
+            <DESC>Introducing Raspberry Pi 4.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/139/original/001_Magpi83_COVER-Web.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/139/original/MagPi83.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 82</TITLE>
+            <DESC>Learn to code with Scratch and Python in this month’s edition of The MagPi.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/140/original/001_Magpi82-Web.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/140/original/MagPi82.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 81</TITLE>
+            <DESC>Build a Raspberry Pi project in this month’s edition of The MagPi.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/141/original/001_Magpi81_COVER_Web.png</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/141/original/MagPi81.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <TITLE>Issue 80</TITLE>
+            <DESC>Discover the 50 best Raspberry Pi tips in this month’s edition of The MagPi.</DESC>
+            <COVER>https://magazines-static.raspberrypi.org/issues/cover_images/000/000/142/original/001_Magpi80_Cover_Web.jpg</COVER>
+            <PDF>https://magazines-static.raspberrypi.org/issues/full_pdfs/000/000/142/original/MagPi80.pdf</PDF>
+        </ITEM>
+    </MAGPI>
+    <BOOKS>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/029/original/Pi-Projects-5-COVER-2D.jpg</COVER>
+            <TITLE>Projects Book 5</TITLE>
+            <DESC>The Raspberry Pi is loved the world over by educators and makers thanks to its tiny size and endless possibilities. Find out why it’s loved and how to use it with the latest official Projects Book…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/028/original/001-Retro-Gaming-COVER.jpg</COVER>
+            <TITLE>Retro Gaming with Raspberry Pi</TITLE>
+            <DESC>This 164-page book shows you how to set up a Raspberry Pi to play classic games, and a whole lot more. Build your own portable console, full-size arcade cabinet, and pinball machine with our step-b…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/027/original/001_GetStartedRPi_PACKAGE-WEB.png</COVER>
+            <TITLE>Get Started with Raspberry Pi</TITLE>
+            <DESC>Ideal for beginners, this official guide and starter kit contains everything you need to get started with Raspberry Pi. Inside you’ll find a Raspberry Pi 3A+, the official case, and a 16GB microSD…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/026/original/RPi_BeginnersGuide_3E_OFC.jpg</COVER>
+            <TITLE>Raspberry Pi Beginner’s Guide v3</TITLE>
+            <DESC>Fully updated for Raspberry Pi 4 and latest software, including Scratch 3, this 252-page official Raspberry Pi book is crammed with projects and beginner’s guides containing all the information you…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/001/original/001-RPi_BeginnersGuide_2019-OFC.jpg</COVER>
+            <TITLE>Beginner’s Guide v2</TITLE>
+            <DESC>The Raspberry Pi is a small, clever, British-built computer that’s packed with potential. Made using the same technology you find in a smartphone, the Raspberry Pi is designed to help you learn cod…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/002/original/GUI-Programming_COVER.png</COVER>
+            <TITLE>C & GUI Programming</TITLE>
+            <DESC>Even if you are an absolute beginner, this book will teach you all you need to know to write simple programs in C and start creating GUIs. The first half of the book is an introduction to C, and co…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/003/original/RPI_CommandLine_2ndEd_Cover_1024x1024@2x.jpg</COVER>
+            <TITLE>Command Line 2</TITLE>
+            <DESC>Using the command line is an amazing skill to have, allowing you to control a computer more effectively than ever before – especially when it comes to Raspbian on the Raspberry Pi! Here’s our updat…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/005/original/BeginnersGuide.jpg</COVER>
+            <TITLE>Beginner’s Guide</TITLE>
+            <DESC>The Raspberry Pi is a small, clever, British-built computer that’s packed with potential. Made using the same technology you find in a smartphone, the Raspberry Pi is designed to help…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/004/original/Book-of-Scratch-COVER.png</COVER>
+            <TITLE>Book of Scratch</TITLE>
+            <DESC>The first ever Code Club book is here! With it, you’ll learn how to code using Scratch, the block-based programming language. In each chapter you’ll find instructions to build cool games, animation…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/006/original/Pi-Projects-Volume04_COVER.jpg</COVER>
+            <TITLE>Projects Book 4</TITLE>
+            <DESC>The Raspberry Pi is loved the world over by educators and makers thanks to it’s tiny size and endless possibilities. We’ve managed to stuff the fourth edition of the official Raspberry Pi Projects…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/007/original/MagPi-Annual-2018-COVER-WEB.jpg</COVER>
+            <TITLE>Annual 2018</TITLE>
+            <DESC>The Raspberry Pi Annual 2018 is an educational book packed with cartons, quizzes, and computer code. It’s entertaining for kids of all ages, and the perfect introduction to The Raspberry Pi – the B…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/008/original/Pi-Beginners-cover-DIGITAL-1.png</COVER>
+            <TITLE>Beginner’s Book 1</TITLE>
+            <DESC>The official Raspberry Pi Beginner’s book comes with everything you need to get started with Raspberry Pi today (hardware not included with the digital edition). Inside you’ll find a Raspberry Pi Z…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/009/original/Projects_v3_COVER.jpg</COVER>
+            <TITLE>Projects Book 3</TITLE>
+            <DESC>The Raspberry Pi is becoming a household name. It’s ubiquitous in the maker community, helped revolutionised computing the world over, and is now the third best-selling computer of all time. Get to…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/010/original/J005170_RPI_Essentials_10-AIY-Projects_DIGITAL.png</COVER>
+            <TITLE>AIY Voice Essentials</TITLE>
+            <DESC>Google AIY Projects brings do-it-yourself artificial intelligence (AI) to the maker community. You will build a cardboard device (kit sold separately) that uses the Google Assistant to answer quest…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/011/original/Essentials_Camera.png</COVER>
+            <TITLE>Camera Essentials</TITLE>
+            <DESC>The Camera Module is one of the most popular add-ons for the Raspberry Pi and turns your favourite credit card-sized computer into a powerful digital camera. Take pictures and capture video on your…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/014/original/Pi-Projects2-Collected-RGB-1.jpg</COVER>
+            <TITLE>Projects Book 2</TITLE>
+            <DESC>The Raspberry Pi is the best-selling British computer of all time and is known the world over for making incredible hardware and software projects possible. It’s also helping to revolutionise compu…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/016/original/4718_Essentials-08-Code-with-C-COVER.png</COVER>
+            <TITLE>Learn C Essentials</TITLE>
+            <DESC>The C programming language been used to program everything from the tiny microcontrollers used in watches and toasters up to huge software systems – most of Linux (and Raspbian itself) is written i…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/017/original/Essentials-07-GPIO-ZERO_Flat_Cover.jpg</COVER>
+            <TITLE>GPIO Zero Essentials</TITLE>
+            <DESC>Using the GPIO pins on your Raspberry Pi opens up a whole new world of possibilities. While it might seem daunting at first glance, with our help you’ll be creating electronic circuits and controll…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/018/original/Minecraft-Ebook-DIGITAL-COVER.jpg</COVER>
+            <TITLE>Minecraft Essentials</TITLE>
+            <DESC>Minecraft is the biggest game on the planet with more than 30 million copies sold across numerous hardware platforms. Not bad for a sandbox that doesn’t really have a point. The version of Minecraf…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/019/original/Scratch-Cover.jpg</COVER>
+            <TITLE>Scratch Essentials</TITLE>
+            <DESC>Created by the boffins at MIT, Scratch enables children and adults without any prior knowledge to start programming within minutes. In this book, we’ll help you get started and guide you step-by-st…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/020/original/SonicPi-thumb-cover.png</COVER>
+            <TITLE>Sonic Pi Essentials</TITLE>
+            <DESC>Sam Aaron, the creator of Sonic Pi, has written this book to complement the software’s built-in tutorial and to help you jump-start your live-coding career. The book is packed with fun, instantly r…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/021/original/Essentials_SenseHAT_Cover.jpg</COVER>
+            <TITLE>Sense HAT Essentials</TITLE>
+            <DESC>What is the Sense HAT? Why is it in space? Learn about its amazing sensor-suite, its incredible mission aboard the ISS with Astro Pi, and build five fun and educational projects to help you sense t…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/022/original/RPi_Essentials_eBook2_PythonGames-001.png</COVER>
+            <TITLE>Make Games</TITLE>
+            <DESC>While countless millions of us like nothing more than spending hours racking up high scores on our favourite games, too few of us are exposed to an even more gratifying way to spend the evening – m…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/023/original/Pi-Projects_Cover_flat_stroke.jpg</COVER>
+            <TITLE>Projects Book</TITLE>
+            <DESC>How to get started with your Raspberry Pi   Dozens of inspirational community projects   Essential guides and amazing ideas   Expert reviews and buying advice   Never-before printed pages from the…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/024/original/Bash-Vol-1-Cover1.jpg</COVER>
+            <TITLE>Command Line</TITLE>
+            <DESC>For getting instructions from user to computer – in a clear, quick and unambiguous form – the command line is often the best way. Now – thanks to Raspbian on the Raspberry Pi – a new generation are…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+        <ITEM>
+            <COVER>https://magazines-static.raspberrypi.org/books/cover_images/000/000/025/original/MagPi-SE1-Cover.png</COVER>
+            <TITLE>MagPi SE 1</TITLE>
+            <DESC>Internet radio   Retro gaming   Photography   Catch up TV   Robot arm   Minecraft   Printing   … and much more The MagPi is freely licensed under Creative Commons (BY-SA-NC 3.0). You can download t…</DESC>
+            <PDF>https://magazines-static.raspberrypi.org/books/full_pdfs/000/000/029/original/Pi-Projects5.pdf</PDF>
+        </ITEM>
+    </BOOKS>
+</PUBS>
+       
+            
