@@ -76,10 +76,13 @@ static GtkWidget *main_dlg, *items_iv, *install_btn;
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_cancel, *msg_pbv;
 static GtkWidget *err_dlg, *err_msg, *err_btn;
 
+GdkPixbuf *cloud, *grey;
+
 /* Data store for icon grid */
 
 GtkListStore *items;
 GtkTreeIter selitem;
+GtkTreeIter covitem;
 
 /* Libcurl variables */
 
@@ -260,6 +263,44 @@ void *update_covers (void *param)
     return NULL;
 }
 
+gboolean get_cover_for_item (gpointer data)
+{
+    int dl, w, h;
+    gchar *path, *lpath;
+    GdkPixbuf *cover;
+
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
+    lpath = get_local_path (path, CACHE_PATH);
+    if (access (lpath, F_OK) != -1)
+    {
+        cover = get_cover (lpath);
+        if (!dl)
+        {
+            w = gdk_pixbuf_get_width (cover);
+            h = gdk_pixbuf_get_height (cover);
+            gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
+            gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+        }
+        gtk_list_store_set (items, &covitem, ITEM_COVER, cover, -1);
+        g_object_unref (cover);
+        g_free (lpath);
+        g_free (path);
+
+        if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem)) return TRUE;
+        else
+        {
+            gtk_widget_queue_draw (items_iv);
+            return FALSE;
+        }
+    }
+}
+
+void start_cover_load (void)
+{
+    if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &covitem))
+        g_idle_add (get_cover_for_item, NULL);
+}
+
 
 void open_pdf (char *path)
 {
@@ -366,7 +407,8 @@ static void read_data_file (void)
     msg_dlg = NULL;
     gtk_widget_set_sensitive (install_btn, TRUE);
 
-    pthread_create (&update_thread, NULL, update_covers, NULL);
+    //pthread_create (&update_thread, NULL, update_covers, NULL);
+    start_cover_load ();
 }
 
 
@@ -573,6 +615,9 @@ int main (int argc, char *argv[])
     gdk_threads_enter ();
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
+
+    cloud = get_cover (PACKAGE_DATA_DIR "/cloud.png");
+    grey = get_cover (PACKAGE_DATA_DIR "/grey.png");
 
     // build the UI
     builder = gtk_builder_new ();
