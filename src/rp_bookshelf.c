@@ -46,6 +46,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <libintl.h>
 
+#include <curl/curl.h>
+
 #define COVER_SIZE 128
 
 #define CACHE_PATH      "/.cache/bookshelf/"
@@ -80,7 +82,11 @@ static GtkWidget *err_dlg, *err_msg, *err_btn;
 GtkListStore *items;
 GtkTreeIter selitem;
 
-guint pulse_timer;
+/* Libcurl variables */
+
+CURL *http_handle;
+CURLM *multi_handle;
+FILE *outfile;
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
@@ -94,6 +100,78 @@ static void message (char *msg, int wait, int prog);
 static char *get_shell_string (char *cmd);
 static gboolean net_available (void);
 static void cancel (GtkButton* btn, gpointer ptr);
+char *get_local_path (char *path, const char *dir);
+GdkPixbuf *get_cover (const char *filename);
+void open_pdf (char *path);
+void start_curl_download (char *url, char *file);
+gboolean curl_poll (gpointer data);
+void finish_curl_download (void);
+
+
+int progress_func(GtkWidget *bar, double t, double d, double ultotal, double ulnow)
+{
+  if (d > 0.0) gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), d/t);
+  return 0;
+}
+
+
+void start_curl_download (char *url, char *file)
+{
+    char *fullurl = g_strdup_printf ("%s%s", HOST_SITE, url);
+
+    http_handle = curl_easy_init ();
+    multi_handle = curl_multi_init ();
+
+    outfile = fopen (file, "wb");
+
+    curl_easy_setopt (http_handle, CURLOPT_URL, fullurl);
+    curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
+    curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt (http_handle, CURLOPT_PROGRESSFUNCTION, progress_func);
+    curl_easy_setopt (http_handle, CURLOPT_PROGRESSDATA, msg_pb);
+
+    curl_multi_add_handle (multi_handle, http_handle);
+
+    g_timeout_add (250, curl_poll, NULL);
+}
+
+gboolean curl_poll (gpointer data)
+{
+    int still_running;
+    curl_multi_perform (multi_handle, &still_running);
+    if (still_running) return TRUE;
+    finish_curl_download ();
+    return FALSE;
+}
+
+void finish_curl_download (void)
+{
+    gchar *cpath, *fpath, *lpath, *clpath;
+
+    fclose (outfile);
+
+    curl_multi_remove_handle (multi_handle, http_handle);
+    curl_easy_cleanup (http_handle);
+    curl_multi_cleanup (multi_handle);
+    curl_global_cleanup ();
+
+    gtk_widget_destroy (GTK_WIDGET (msg_dlg));
+    msg_dlg = NULL;
+
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &fpath, -1);
+    lpath = get_local_path (fpath, PDF_PATH);
+    clpath = get_local_path (cpath, CACHE_PATH);
+    open_pdf (lpath);
+
+    GdkPixbuf *cover = get_cover (clpath);
+    gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 1, -1);
+    gtk_widget_queue_draw (items_iv);
+
+    g_free (lpath);
+    g_free (cpath);
+    g_free (clpath);
+    g_free (fpath);
+}
 
 /*----------------------------------------------------------------------------*/
 /* Handlers for asynchronous initialisation sequence at start                 */
@@ -197,47 +275,6 @@ void open_pdf (char *path)
 }
 
 
-gboolean pb_pulse (gpointer data)
-{
-    gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-    return TRUE;
-}
-
-
-void *do_download (void *data)
-{
-    gchar *cmd, *lpath, *path, *cpath, *ppath;
-    GdkPixbuf *cover;
-
-    //pulse_timer = g_timeout_add (250, pb_pulse, NULL);
-
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &path, ITEM_PDFPATH, &ppath, -1);
-    lpath = get_local_path (ppath, PDF_PATH);
-    cpath = get_local_path (path, CACHE_PATH);
-
-    cmd = g_strdup_printf ("%s %s%s > %s", DOWNLOAD_CMD, HOST_SITE, ppath, lpath);
-    system (cmd);
-
-    //g_source_remove (pulse_timer);
-    gtk_widget_destroy (GTK_WIDGET (msg_dlg));
-    msg_dlg = NULL;
-
-    open_pdf (lpath);
-
-    cover = get_cover (cpath);
-    gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 1, -1);
-    gtk_widget_queue_draw (items_iv);
-
-    g_free (cmd);
-    g_free (lpath);
-    g_free (cpath);
-    g_free (ppath);
-    g_free (path);
-
-    return NULL;
-}
-
-
 void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
 {
     gchar *lpath, *fpath;
@@ -250,8 +287,8 @@ void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data
 
     if (access (lpath, F_OK) == -1)
     {
-        message (_("Downloading PDF - please wait..."), 0 , -1);
-        pthread_create (&download_thread, NULL, do_download, NULL);
+        message (_("Downloading - please wait..."), 0 , 0);
+        start_curl_download (fpath, lpath);
     }
     else open_pdf (lpath);
 
@@ -532,6 +569,8 @@ int main (int argc, char *argv[])
     bind_textdomain_codeset ( GETTEXT_PACKAGE, "UTF-8" );
     textdomain ( GETTEXT_PACKAGE );
 #endif
+
+    curl_global_init (CURL_GLOBAL_ALL);
 
     // GTK setup
     gdk_threads_init ();
