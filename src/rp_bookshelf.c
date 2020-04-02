@@ -108,6 +108,9 @@ void open_pdf (char *path);
 void start_curl_download (char *url, char *file);
 gboolean curl_poll (gpointer data);
 void finish_curl_download (void);
+void start_curl_image_download (char *url, char *file);
+gboolean curl_im_poll (gpointer data);
+void finish_curl_image_download (void);
 
 
 int progress_func(GtkWidget *bar, double t, double d, double ultotal, double ulnow)
@@ -263,26 +266,31 @@ void *update_covers (void *param)
     return NULL;
 }
 
+void update_cover_entry (char *lpath, int dl)
+{
+    int w, h;
+    GdkPixbuf *cover = get_cover (lpath);
+    if (!dl)
+    {
+        w = gdk_pixbuf_get_width (cover);
+        h = gdk_pixbuf_get_height (cover);
+        gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
+        gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+    }
+    gtk_list_store_set (items, &covitem, ITEM_COVER, cover, -1);
+    g_object_unref (cover);
+}
+
 gboolean get_cover_for_item (gpointer data)
 {
-    int dl, w, h;
+    int dl;
     gchar *path, *lpath;
-    GdkPixbuf *cover;
 
     gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
     lpath = get_local_path (path, CACHE_PATH);
     if (access (lpath, F_OK) != -1)
     {
-        cover = get_cover (lpath);
-        if (!dl)
-        {
-            w = gdk_pixbuf_get_width (cover);
-            h = gdk_pixbuf_get_height (cover);
-            gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-            gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
-        }
-        gtk_list_store_set (items, &covitem, ITEM_COVER, cover, -1);
-        g_object_unref (cover);
+        update_cover_entry (lpath, dl);
         g_free (lpath);
         g_free (path);
 
@@ -293,7 +301,63 @@ gboolean get_cover_for_item (gpointer data)
             return FALSE;
         }
     }
+    else
+    {
+        start_curl_image_download (path, lpath);
+        return FALSE;
+    }
 }
+
+
+void start_curl_image_download (char *url, char *file)
+{
+    http_handle = curl_easy_init ();
+    multi_handle = curl_multi_init ();
+
+    outfile = fopen (file, "wb");
+
+    curl_easy_setopt (http_handle, CURLOPT_URL, url);
+    curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
+    curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 1L);
+
+    curl_multi_add_handle (multi_handle, http_handle);
+
+    g_timeout_add (250, curl_im_poll, NULL);
+}
+
+gboolean curl_im_poll (gpointer data)
+{
+    int still_running;
+    curl_multi_perform (multi_handle, &still_running);
+    if (still_running) return TRUE;
+    finish_curl_image_download ();
+    return FALSE;
+}
+
+void finish_curl_image_download (void)
+{
+    gchar *lpath, *path;
+    GdkPixbuf *cover;
+    int dl;
+
+    fclose (outfile);
+
+    curl_multi_remove_handle (multi_handle, http_handle);
+    curl_easy_cleanup (http_handle);
+    curl_multi_cleanup (multi_handle);
+    curl_global_cleanup ();
+
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
+    lpath = get_local_path (path, CACHE_PATH);
+    update_cover_entry (lpath, dl);
+    g_free (lpath);
+
+    if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem))
+       g_idle_add (get_cover_for_item, NULL);
+    else gtk_widget_queue_draw (items_iv);
+}
+
+
 
 void start_cover_load (void)
 {
