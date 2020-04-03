@@ -82,7 +82,7 @@ static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_cancel, *msg_pbv;
 
 /* Preloaded default pixbufs */
 
-static GdkPixbuf *cloud, *grey, *nocover;
+static GdkPixbuf *cloud, *grey, *nocover, *nodl;
 
 /* Data store for icon grid */
 
@@ -570,7 +570,7 @@ static int read_data_file (char *path)
                     gtk_list_store_append (items, &entry);
                     gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
                         ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
-                        ITEM_COVER, nocover, ITEM_DOWNLOADED, downloaded, -1);
+                        ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     in_item = FALSE;
                     g_free (title);
                     g_free (desc);
@@ -715,6 +715,7 @@ static void close_prog (GtkButton* btn, gpointer ptr)
 int main (int argc, char *argv[])
 {
     GtkBuilder *builder;
+    int w;
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
@@ -739,6 +740,9 @@ int main (int argc, char *argv[])
     cloud = get_cover (PACKAGE_DATA_DIR "/cloud.png");
     grey = get_cover (PACKAGE_DATA_DIR "/grey.png");
     nocover = get_cover (PACKAGE_DATA_DIR "/nocover.png");
+    nodl = get_cover (PACKAGE_DATA_DIR "/nocover.png");
+    w = gdk_pixbuf_get_width (nodl);
+    gdk_pixbuf_composite (cloud, nodl, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
 
     // build the UI
     builder = gtk_builder_new ();
