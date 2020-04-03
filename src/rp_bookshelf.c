@@ -104,6 +104,10 @@ void (*term_fn) (int success);
 char *fname;
 char *tmpname;
 
+/* Flags to manage simulataneous download of art and PDF */
+
+gboolean cover_dl, pdf_dl_req;
+
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
 /*----------------------------------------------------------------------------*/
@@ -125,6 +129,7 @@ static void image_download_done (int success);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void open_pdf (char *path);
 static void pdf_download_done (int success);
+static void get_pending_pdf (void);
 static gboolean get_catalogue (gpointer data);
 static void load_catalogue (int success);
 static void get_param (char *linebuf, char *name, char **dest);
@@ -351,6 +356,12 @@ static gboolean find_cover_for_item (gpointer data)
     int dl;
     gchar *path, *lpath;
 
+    if (pdf_dl_req)
+    {
+        get_pending_pdf ();
+        return FALSE;
+    }
+
     gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
     lpath = get_local_path (path, CACHE_PATH);
     if (access (lpath, F_OK) != -1)
@@ -362,7 +373,9 @@ static gboolean find_cover_for_item (gpointer data)
         if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem)) return TRUE;
         else
         {
+            cover_dl = FALSE;
             gtk_widget_queue_draw (items_iv);
+            if (pdf_dl_req) get_pending_pdf ();
             return FALSE;
         }
     }
@@ -388,7 +401,12 @@ static void image_download_done (int success)
 
     if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem))
        g_idle_add (find_cover_for_item, NULL);
-    else gtk_widget_queue_draw (items_iv);
+    else
+    {
+        cover_dl = FALSE;
+        gtk_widget_queue_draw (items_iv);
+        if (pdf_dl_req) get_pending_pdf ();
+    }
 }
 
 
@@ -410,7 +428,8 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
     if (access (lpath, F_OK) == -1)
     {
         message (_("Downloading - please wait..."), 0 , 0);
-        start_curl_download (fpath, lpath, 1, pdf_download_done);
+        if (!cover_dl) start_curl_download (fpath, lpath, 1, pdf_download_done);
+        else pdf_dl_req = TRUE;
     }
     else open_pdf (lpath);
 
@@ -450,6 +469,25 @@ static void pdf_download_done (int success)
     g_free (cpath);
     g_free (clpath);
     g_free (fpath);
+
+    if (cover_dl) g_idle_add (find_cover_for_item, NULL);
+}
+
+/* get_pending_pdf - start a PDF download that interrupts artwork fetch */
+
+static void get_pending_pdf (void)
+{
+    gchar *lpath, *fpath;
+
+    pdf_dl_req = FALSE;
+
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &fpath, -1);
+
+    lpath = get_local_path (fpath, PDF_PATH);
+    start_curl_download (fpath, lpath, 1, pdf_download_done);
+
+    g_free (fpath);
+    g_free (lpath);
 }
 
 
@@ -555,15 +593,16 @@ static int read_data_file (char *path)
             }
         }
         fclose (fp);
-    }
+    } else return 0;
 
     if (!count) return count;
 
-    // else handle no file error here...
-
     // start loading covers
     if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &covitem))
+    {
+        cover_dl = TRUE;
         g_idle_add (find_cover_for_item, NULL);
+    }
     return count;
 }
 
@@ -727,6 +766,8 @@ int main (int argc, char *argv[])
 
     // update catalogue
     g_idle_add (get_catalogue, NULL);
+    cover_dl = FALSE;
+    pdf_dl_req = FALSE;
 
     gtk_main ();
 
