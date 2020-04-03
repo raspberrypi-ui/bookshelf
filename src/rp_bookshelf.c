@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctype.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #include <glib.h>
 #include <glib/gi18n.h>
@@ -82,7 +83,7 @@ static GtkWidget *err_dlg, *err_msg, *err_btn;
 
 /* Preloaded default pixbufs */
 
-static GdkPixbuf *cloud, *grey;
+static GdkPixbuf *cloud, *grey, *nocover;
 
 /* Data store for icon grid */
 
@@ -177,6 +178,20 @@ static gboolean net_available (void)
         g_free (ip);
     }
     return val;
+}
+
+/* create dir - create a directory if it doesn't exist */
+
+static void create_dir (char *dir)
+{
+    DIR *dp;
+    gchar *path;
+
+    path = g_strdup_printf ("%s%s", g_get_home_dir (), dir);
+    dp = opendir (path);
+    if (!dp) mkdir (path, 0755);
+    else closedir (dp);
+    g_free (path);
 }
 
 
@@ -316,13 +331,13 @@ static gboolean find_cover_for_item (gpointer data)
 static void image_download_done (int success)
 {
     gchar *lpath, *path;
-    GdkPixbuf *cover;
     int dl;
 
     gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
     lpath = get_local_path (path, CACHE_PATH);
     update_cover_entry (lpath, dl);
     g_free (lpath);
+    g_free (path);
 
     if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem))
        g_idle_add (find_cover_for_item, NULL);
@@ -438,8 +453,6 @@ static int read_data_file (char *path)
     GtkTreeIter entry;
     int category = -1, in_item = FALSE, downloaded, count = 0;
 
-    GdkPixbuf *pb = get_cover (PACKAGE_DATA_DIR "/nocover.png");
-
     FILE *fp = fopen (path, "rb");
     if (fp)
     {
@@ -460,7 +473,7 @@ static int read_data_file (char *path)
                     gtk_list_store_append (items, &entry);
                     gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
                         ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
-                        ITEM_COVER, pb, ITEM_DOWNLOADED, downloaded, -1);
+                        ITEM_COVER, nocover, ITEM_DOWNLOADED, downloaded, -1);
                     in_item = FALSE;
                     g_free (title);
                     g_free (desc);
@@ -648,7 +661,6 @@ static void cancel (GtkButton* btn, gpointer ptr)
 int main (int argc, char *argv[])
 {
     GtkBuilder *builder;
-    GtkCellRenderer *crp, *crt, *crb;
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
@@ -656,6 +668,11 @@ int main (int argc, char *argv[])
     bind_textdomain_codeset ( GETTEXT_PACKAGE, "UTF-8" );
     textdomain ( GETTEXT_PACKAGE );
 #endif
+
+    // check that directories exist
+    create_dir ("/.cache/");
+    create_dir (CACHE_PATH);
+    create_dir (PDF_PATH);
 
     curl_global_init (CURL_GLOBAL_ALL);
 
@@ -667,6 +684,7 @@ int main (int argc, char *argv[])
 
     cloud = get_cover (PACKAGE_DATA_DIR "/cloud.png");
     grey = get_cover (PACKAGE_DATA_DIR "/grey.png");
+    nocover = get_cover (PACKAGE_DATA_DIR "/nocover.png");
 
     // build the UI
     builder = gtk_builder_new ();
