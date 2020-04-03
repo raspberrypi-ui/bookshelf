@@ -56,6 +56,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
 
+/* Termination function arguments */
+
+#define SUCCESS     1
+#define FAILURE     0
+#define CANCELLED  -1
+
 /* Columns in packages and categories list stores */
 
 #define ITEM_CATEGORY       0
@@ -101,7 +107,7 @@ CURL *http_handle;
 CURLM *multi_handle;
 FILE *outfile;
 guint curl_timer;
-void (*term_fn) (gboolean success);
+void (*term_fn) (int success);
 char *fname;
 char *tmpname;
 gboolean have_bytes;
@@ -119,24 +125,26 @@ static char *get_shell_string (char *cmd);
 static gboolean net_available (void);
 static void create_dir (char *dir);
 static void copy_file (char *src, char *dst);
-static void start_curl_download (char *url, char *file, void (*end_fn)(gboolean success));
+static void start_curl_download (char *url, char *file, void (*end_fn)(int success));
 static gboolean curl_poll (gpointer data);
-static void finish_curl_download (gboolean success);
+static void finish_curl_download (int success);
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
 static void abort_curl_download (void);
 static GdkPixbuf *get_cover (const char *filename);
 static void update_cover_entry (char *lpath, int dl);
 static gboolean find_cover_for_item (gpointer data);
-static void image_download_done (gboolean success);
+static void image_download_done (int success);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void open_pdf (char *path);
-static void pdf_download_done (gboolean success);
+static gboolean reset_cursor (gpointer data);
+static void pdf_download_done (int success);
 static void get_pending_pdf (void);
 static gboolean get_catalogue (gpointer data);
-static void load_catalogue (gboolean success);
+static void load_catalogue (int success);
 static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
+static gboolean cancel_clicked (GtkButton *button, gpointer data);
 static void message (char *msg, int wait, int prog);
 static void hide_message (void);
 static void close_prog (GtkButton* btn, gpointer ptr);
@@ -254,18 +262,18 @@ static gboolean curl_poll (gpointer data)
     int still_running;
     if (curl_multi_perform (multi_handle, &still_running) != CURLE_OK)
     {
-        finish_curl_download (FALSE);
+        finish_curl_download (FAILURE);
         return FALSE;
     }
     if (still_running) return TRUE;
     else
     {
-        finish_curl_download (TRUE);
+        finish_curl_download (SUCCESS);
         return FALSE;
     }
 }
 
-static void finish_curl_download (gboolean success)
+static void finish_curl_download (int success)
 {
     if (!have_bytes) success = 0;
     if (outfile) fclose (outfile);
@@ -310,7 +318,7 @@ static void abort_curl_download (void)
     g_free (fname);
     g_free (tmpname);
 
-    message (_("Download aborted"), 1, -1);
+    term_fn (CANCELLED);
 }
 
 
@@ -393,12 +401,12 @@ static gboolean find_cover_for_item (gpointer data)
 
 /* image_download_done - called on completed curl image download */
 
-static void image_download_done (gboolean success)
+static void image_download_done (int success)
 {
     gchar *lpath, *path;
     int dl;
 
-    if (success)
+    if (success == SUCCESS)
     {
         gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
         lpath = get_local_path (path, CACHE_PATH);
@@ -449,6 +457,10 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
 
 static void open_pdf (char *path)
 {
+    //GdkCursor *busy = gdk_cursor_new (GDK_WATCH);
+    GdkCursor *busy = gdk_cursor_new_from_name (gdk_display_get_default (), "watch");
+    gdk_window_set_cursor (gtk_widget_get_window (main_dlg), busy);
+    g_timeout_add  (5000, reset_cursor, NULL);
     if (fork () == 0)
     {
         dup2 (open ("/dev/null", O_WRONLY), STDERR_FILENO); // redirect stderr...
@@ -456,14 +468,22 @@ static void open_pdf (char *path)
     }
 }
 
+/* reset_cursor - the PDF viewer doesn't show busy, so bodge it... */
+
+static gboolean reset_cursor (gpointer data)
+{
+    gdk_window_set_cursor (gtk_widget_get_window (main_dlg), NULL);
+    return FALSE;
+}
+
 /* pdf_download_done - called on completed curl PDF download */
 
-static void pdf_download_done (gboolean success)
+static void pdf_download_done (int success)
 {
     gchar *cpath, *fpath, *lpath, *clpath;
 
     hide_message ();
-    if (success)
+    if (success == SUCCESS)
     {
         gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &fpath, -1);
         lpath = get_local_path (fpath, PDF_PATH);
@@ -480,6 +500,7 @@ static void pdf_download_done (gboolean success)
         g_free (fpath);
         g_object_unref (cover);
     }
+    else if (success = CANCELLED) message (_("Download cancelled"), 1, -1);
     else message (_("Unable to download file"), 1, -1);
 
     if (cover_dl) g_idle_add (find_cover_for_item, NULL);
@@ -526,13 +547,13 @@ static gboolean get_catalogue (gpointer data)
 
 /* get_catalogue - open a catalogue file - either main, backup or fallback */
 
-static void load_catalogue (gboolean success)
+static void load_catalogue (int success)
 {
     hide_message ();
 
-    if (success && read_data_file (catpath)) return;
-
-    message (_("Unable to download updates"), 1, -1);
+    if (success == SUCCESS && read_data_file (catpath)) return;
+    if (success = CANCELLED) message (_("Download cancelled"), 1, -1);
+    else message (_("Unable to download updates"), 1, -1);
     copy_file (cbpath, catpath);
     if (read_data_file (catpath)) return;
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
