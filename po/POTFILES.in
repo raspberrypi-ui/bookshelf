@@ -1,0 +1,5 @@
+[encoding: UTF-8]
+src/rp_bookshelf.c
+[type: gettext/glade] data/rp_bookshelf.ui
+# files added by intltool-prepare
+data/rp-bookshelf.desktop.in

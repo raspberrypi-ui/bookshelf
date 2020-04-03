@@ -1,0 +1,5 @@
+rp-bookshelf (0.1) buster; urgency=medium
+
+  * Initial release
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 03 Apr 2020 16:50:11 +0100
