@@ -121,7 +121,7 @@ void (*term_fn) (tf_status success);
 char *fname, *tmpname;
 gboolean have_bytes;
 
-/* Flags to manage simulataneous download of art and PDF */
+/* Flags to manage simultaneous download of art and PDF */
 
 gboolean cover_dl, pdf_dl_req;
 
