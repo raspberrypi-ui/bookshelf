@@ -99,6 +99,7 @@ char *catpath, *cbpath;
 CURL *http_handle;
 CURLM *multi_handle;
 FILE *outfile;
+guint curl_timer;
 void (*term_fn) (int success);
 
 /*----------------------------------------------------------------------------*/
@@ -114,6 +115,7 @@ static void start_curl_download (char *url, char *file, int progress, void (*end
 static gboolean curl_poll (gpointer data);
 static void finish_curl_download (int success);
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
+static void abort_curl_download (void);
 static GdkPixbuf *get_cover (const char *filename);
 static void update_cover_entry (char *lpath, int dl);
 static gboolean find_cover_for_item (gpointer data);
@@ -127,7 +129,8 @@ static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
 static void message (char *msg, int wait, int prog);
-static void cancel (GtkButton* btn, gpointer ptr);
+static void hide_message (void);
+static void close_prog (GtkButton* btn, gpointer ptr);
 
 /*----------------------------------------------------------------------------*/
 /* Helpers                                                                    */
@@ -230,7 +233,7 @@ static void start_curl_download (char *url, char *file, int progress, void (*end
 
     curl_multi_add_handle (multi_handle, http_handle);
 
-    g_timeout_add (100, curl_poll, NULL);
+    curl_timer = g_timeout_add (100, curl_poll, NULL);
 }
 
 static gboolean curl_poll (gpointer data)
@@ -263,8 +266,24 @@ static void finish_curl_download (int success)
 
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow)
 {
-  if (d > 0.0) gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), d/t);
-  return 0;
+    double prog = d / t;
+    if (prog >= 0.0 && prog <= 1.0) gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), prog);
+    return 0;
+}
+
+static void abort_curl_download (void)
+{
+    g_source_remove (curl_timer);
+    hide_message ();
+
+    if (outfile) fclose (outfile);
+
+    curl_multi_remove_handle (multi_handle, http_handle);
+    curl_easy_cleanup (http_handle);
+    curl_multi_cleanup (multi_handle);
+    curl_global_cleanup ();
+
+    message (_("Download aborted"), 1, -1);
 }
 
 
@@ -399,8 +418,7 @@ static void pdf_download_done (int success)
 {
     gchar *cpath, *fpath, *lpath, *clpath;
 
-    gtk_widget_destroy (GTK_WIDGET (msg_dlg));
-    msg_dlg = NULL;
+    hide_message ();
 
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &fpath, -1);
     lpath = get_local_path (fpath, PDF_PATH);
@@ -422,7 +440,7 @@ static void pdf_download_done (int success)
 /* Catalogue management                                                       */
 /*----------------------------------------------------------------------------*/
 
-/* get_catalogue - find a catalogue file, either online or local */
+/* get_catalogue - start a catalogue download if there is a net connection */
 
 static gboolean get_catalogue (gpointer data)
 {
@@ -439,13 +457,11 @@ static gboolean get_catalogue (gpointer data)
     return FALSE;
 }
 
+/* get_catalogue - open a catalogue file - either main, backup or fallback */
+
 static void load_catalogue (int success)
 {
-    if (msg_dlg)
-    {
-        gtk_widget_destroy (GTK_WIDGET (msg_dlg));
-        msg_dlg = NULL;
-    }
+    hide_message ();
     gtk_widget_set_sensitive (close_btn, TRUE);
 
     if (success && read_data_file (catpath)) return;
@@ -542,11 +558,13 @@ static int read_data_file (char *path)
 
 static gboolean ok_clicked (GtkButton *button, gpointer data)
 {
-    if (msg_dlg)
-    {
-        gtk_widget_destroy (GTK_WIDGET (msg_dlg));
-        msg_dlg = NULL;
-    }
+    hide_message ();
+    return FALSE;
+}
+
+static gboolean cancel_clicked (GtkButton *button, gpointer data)
+{
+    abort_curl_download ();
     return FALSE;
 }
 
@@ -559,7 +577,7 @@ static void message (char *msg, int wait, int prog)
         GdkColor col;
 
         builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/rp_prefapps.ui", NULL);
+        gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/rp_bookshelf.ui", NULL);
 
         msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "msg");
         gtk_window_set_modal (GTK_WINDOW (msg_dlg), TRUE);
@@ -603,7 +621,8 @@ static void message (char *msg, int wait, int prog)
     }
     else
     {
-        gtk_widget_set_visible (msg_cancel, FALSE);
+        g_signal_connect (msg_cancel, "clicked", G_CALLBACK (cancel_clicked), NULL);
+        gtk_widget_set_visible (msg_cancel, TRUE);
         gtk_widget_set_visible (msg_btn, FALSE);
         gtk_widget_set_visible (msg_pb, TRUE);
         if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
@@ -615,11 +634,20 @@ static void message (char *msg, int wait, int prog)
     }
 }
 
+static void hide_message (void)
+{
+    if (msg_dlg)
+    {
+        gtk_widget_destroy (GTK_WIDGET (msg_dlg));
+        msg_dlg = NULL;
+    }
+}
+
 /*----------------------------------------------------------------------------*/
 /* Handlers for main window user interaction                                  */
 /*----------------------------------------------------------------------------*/
 
-static void cancel (GtkButton* btn, gpointer ptr)
+static void close_prog (GtkButton* btn, gpointer ptr)
 {
     gtk_main_quit ();
 }
@@ -675,8 +703,8 @@ int main (int argc, char *argv[])
     gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (items_iv), 2);
     g_signal_connect (items_iv, "item-activated", G_CALLBACK (item_selected), NULL);
 
-    g_signal_connect (close_btn, "clicked", G_CALLBACK (cancel), NULL);
-    g_signal_connect (main_dlg, "delete_event", G_CALLBACK (cancel), NULL);
+    g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
+    g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
 
     gtk_widget_set_sensitive (close_btn, FALSE);
 
