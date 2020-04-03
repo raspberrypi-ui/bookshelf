@@ -77,9 +77,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Controls */
 
-static GtkWidget *main_dlg, *items_iv, *install_btn;
+static GtkWidget *main_dlg, *items_iv, *close_btn;
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_cancel, *msg_pbv;
-static GtkWidget *err_dlg, *err_msg, *err_btn;
 
 /* Preloaded default pixbufs */
 
@@ -93,7 +92,7 @@ GtkTreeIter covitem;
 
 /* Catalogue file path */
 
-char *catpath;
+char *catpath, *cbpath;
 
 /* Libcurl variables */
 
@@ -109,6 +108,8 @@ void (*term_fn) (int success);
 static char *get_local_path (char *path, const char *dir);
 static char *get_shell_string (char *cmd);
 static gboolean net_available (void);
+static void create_dir (char *dir);
+static void copy_file (char *src, char *dst);
 static void start_curl_download (char *url, char *file, int progress, void (*end_fn)(int success));
 static gboolean curl_poll (gpointer data);
 static void finish_curl_download (int success);
@@ -121,11 +122,10 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
 static void open_pdf (char *path);
 static void pdf_download_done (int success);
 static gboolean get_catalogue (gpointer data);
-static void catalogue_download_done (int success);
+static void load_catalogue (int success);
 static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
-static void error_box (char *msg);
 static void message (char *msg, int wait, int prog);
 static void cancel (GtkButton* btn, gpointer ptr);
 
@@ -192,6 +192,17 @@ static void create_dir (char *dir)
     if (!dp) mkdir (path, 0755);
     else closedir (dp);
     g_free (path);
+}
+
+/* copy_file - system file copy */
+
+static void copy_file (char *src, char *dst)
+{
+    gchar *cmd;
+
+    cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
+    system (cmd);
+    g_free (cmd);
 }
 
 
@@ -415,17 +426,33 @@ static void pdf_download_done (int success)
 
 static gboolean get_catalogue (gpointer data)
 {
-    // check the cache and download folders exist; create them if not!!!!
-
-    message (_("Reading list of publications - please wait..."), 0 , 0);
     catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
-    start_curl_download (CATALOGUE_URL, catpath, 1, catalogue_download_done);
+    cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
+
+    if (!net_available ()) load_catalogue (0);
+    else
+    {
+        message (_("Reading list of publications - please wait..."), 0 , 0);
+        copy_file (catpath, cbpath);
+        start_curl_download (CATALOGUE_URL, catpath, 1, load_catalogue);
+    }
     return FALSE;
 }
 
-static void catalogue_download_done (int success)
+static void load_catalogue (int success)
 {
+    if (msg_dlg)
+    {
+        gtk_widget_destroy (GTK_WIDGET (msg_dlg));
+        msg_dlg = NULL;
+    }
+    gtk_widget_set_sensitive (close_btn, TRUE);
+
     if (success && read_data_file (catpath)) return;
+
+    message (_("Unable to download updates."), 1, -1);
+    copy_file (cbpath, catpath);
+    if (read_data_file (catpath)) return;
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
 }
 
@@ -501,9 +528,6 @@ static int read_data_file (char *path)
     if (!count) return count;
 
     // else handle no file error here...
-    gtk_widget_destroy (GTK_WIDGET (msg_dlg));
-    msg_dlg = NULL;
-    gtk_widget_set_sensitive (install_btn, TRUE);
 
     // start loading covers
     if (gtk_tree_model_get_iter_first (GTK_TREE_MODEL (items), &covitem))
@@ -513,7 +537,7 @@ static int read_data_file (char *path)
 
 
 /*----------------------------------------------------------------------------*/
-/* Progress / error box                                                       */
+/* Message box                                                                */
 /*----------------------------------------------------------------------------*/
 
 static gboolean ok_clicked (GtkButton *button, gpointer data)
@@ -523,60 +547,7 @@ static gboolean ok_clicked (GtkButton *button, gpointer data)
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
         msg_dlg = NULL;
     }
-    if (err_dlg)
-    {
-        gtk_widget_destroy (GTK_WIDGET (err_dlg));
-        err_dlg = NULL;
-    }
-    gtk_main_quit ();
     return FALSE;
-}
-
-static void error_box (char *msg)
-{
-    if (msg_dlg)
-    {
-        // clear any existing message box
-        gtk_widget_destroy (GTK_WIDGET (msg_dlg));
-        msg_dlg = NULL;
-    }
-
-    if (!err_dlg)
-    {
-        GtkBuilder *builder;
-        GtkWidget *wid;
-        GdkColor col;
-
-        builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/rp_prefapps.ui", NULL);
-
-        err_dlg = (GtkWidget *) gtk_builder_get_object (builder, "error");
-        gtk_window_set_modal (GTK_WINDOW (err_dlg), TRUE);
-        gtk_window_set_transient_for (GTK_WINDOW (err_dlg), GTK_WINDOW (main_dlg));
-        gtk_window_set_position (GTK_WINDOW (err_dlg), GTK_WIN_POS_CENTER_ON_PARENT);
-        gtk_window_set_destroy_with_parent (GTK_WINDOW (err_dlg), TRUE);
-        gtk_window_set_default_size (GTK_WINDOW (err_dlg), 400, 200);
-
-        gdk_color_parse ("#FFFFFF", &col);
-        wid = (GtkWidget *) gtk_builder_get_object (builder, "err_eb");
-        gtk_widget_modify_bg (wid, GTK_STATE_NORMAL, &col);
-        wid = (GtkWidget *) gtk_builder_get_object (builder, "err_sw");
-        gtk_widget_modify_bg (wid, GTK_STATE_NORMAL, &col);
-        wid = (GtkWidget *) gtk_builder_get_object (builder, "err_vp");
-        gtk_widget_modify_bg (wid, GTK_STATE_NORMAL, &col);
-
-        err_msg = (GtkWidget *) gtk_builder_get_object (builder, "err_lbl");
-        err_btn = (GtkWidget *) gtk_builder_get_object (builder, "err_btn");
-
-        gtk_label_set_text (GTK_LABEL (err_msg), msg);
-
-        gtk_button_set_label (GTK_BUTTON (err_btn), "_OK");
-        g_signal_connect (err_btn, "clicked", G_CALLBACK (ok_clicked), NULL);
-
-        gtk_widget_show_all (err_dlg);
-        g_object_unref (builder);
-    }
-    else gtk_label_set_text (GTK_LABEL (err_msg), msg);
 }
 
 static void message (char *msg, int wait, int prog)
@@ -692,7 +663,7 @@ int main (int argc, char *argv[])
 
     main_dlg = (GtkWidget *) gtk_builder_get_object (builder, "main_window");
     items_iv = (GtkWidget *) gtk_builder_get_object (builder, "treeview_prog");
-    install_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
+    close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
 
     // create list store
     items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF); 
@@ -704,17 +675,16 @@ int main (int argc, char *argv[])
     gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (items_iv), 2);
     g_signal_connect (items_iv, "item-activated", G_CALLBACK (item_selected), NULL);
 
-    g_signal_connect (install_btn, "clicked", G_CALLBACK (cancel), NULL);
+    g_signal_connect (close_btn, "clicked", G_CALLBACK (cancel), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (cancel), NULL);
 
-    gtk_widget_set_sensitive (install_btn, FALSE);
+    gtk_widget_set_sensitive (close_btn, FALSE);
 
     gtk_window_set_default_size (GTK_WINDOW (main_dlg), 640, 400);
     gtk_widget_show_all (main_dlg);
 
-    // update application, load the data file and check with backend
-    if (net_available ()) g_idle_add (get_catalogue, NULL);
-    else error_box (_("No network connection - bookshelf cannot be updated"));
+    // update catalogue
+    g_idle_add (get_catalogue, NULL);
 
     gtk_main ();
 
