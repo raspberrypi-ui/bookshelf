@@ -143,7 +143,7 @@ static GdkPixbuf *get_cover (const char *filename);
 static void update_cover_entry (char *lpath, int dl);
 static gboolean find_cover_for_item (gpointer data);
 static void image_download_done (tf_status success);
-static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
+static void pdf_selected (void);
 static void open_pdf (char *path);
 static gboolean reset_cursor (gpointer data);
 static void pdf_download_done (tf_status success);
@@ -156,6 +156,7 @@ static gboolean ok_clicked (GtkButton *button, gpointer data);
 static gboolean cancel_clicked (GtkButton *button, gpointer data);
 static void message (char *msg, int wait, int prog);
 static void hide_message (void);
+static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void close_prog (GtkButton* btn, gpointer ptr);
 
 /*----------------------------------------------------------------------------*/
@@ -443,15 +444,13 @@ static void image_download_done (tf_status success)
 /* PDF handling                                                               */
 /*----------------------------------------------------------------------------*/
 
-/* item_selected - called when icon is activated to open or download PDF */
+/* pdf_selected - called when icon is activated to open or download PDF */
 
-static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
+static void pdf_selected (void)
 {
     gchar *lpath, *fpath;
 
-    gtk_tree_model_get_iter (GTK_TREE_MODEL (items), &selitem, path);
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &fpath, -1);
-
     lpath = get_local_path (fpath, PDF_PATH);
 
     if (access (lpath, F_OK) == -1)
@@ -761,6 +760,12 @@ static void hide_message (void)
 /*----------------------------------------------------------------------------*/
 /* Handlers for main window user interaction                                  */
 /*----------------------------------------------------------------------------*/
+
+static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
+{
+    gtk_tree_model_get_iter (GTK_TREE_MODEL (items), &selitem, path);
+    pdf_selected ();
+}
 
 static void close_prog (GtkButton* btn, gpointer ptr)
 {
