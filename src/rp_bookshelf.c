@@ -101,6 +101,8 @@ CURLM *multi_handle;
 FILE *outfile;
 guint curl_timer;
 void (*term_fn) (int success);
+char *fname;
+char *tmpname;
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
@@ -219,8 +221,15 @@ static void start_curl_download (char *url, char *file, int progress, void (*end
     http_handle = curl_easy_init ();
     multi_handle = curl_multi_init ();
 
-    outfile = fopen (file, "wb");
-    if (!outfile) end_fn (0);
+    fname = g_strdup (file);
+    tmpname = g_strdup_printf ("%s.curl", file);
+    outfile = fopen (tmpname, "wb");
+    if (!outfile)
+    {
+        g_free (fname);
+        g_free (tmpname);
+        end_fn (0);
+    }
 
     curl_easy_setopt (http_handle, CURLOPT_URL, url);
     curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
@@ -255,11 +264,15 @@ static gboolean curl_poll (gpointer data)
 static void finish_curl_download (int success)
 {
     if (outfile) fclose (outfile);
+    if (success) rename (tmpname, fname);
 
     curl_multi_remove_handle (multi_handle, http_handle);
     curl_easy_cleanup (http_handle);
     curl_multi_cleanup (multi_handle);
     curl_global_cleanup ();
+
+    g_free (fname);
+    g_free (tmpname);
 
     term_fn (success);
 }
@@ -277,11 +290,15 @@ static void abort_curl_download (void)
     hide_message ();
 
     if (outfile) fclose (outfile);
+    remove (tmpname);
 
     curl_multi_remove_handle (multi_handle, http_handle);
     curl_easy_cleanup (http_handle);
     curl_multi_cleanup (multi_handle);
     curl_global_cleanup ();
+
+    g_free (fname);
+    g_free (tmpname);
 
     message (_("Download aborted"), 1, -1);
 }
@@ -462,7 +479,6 @@ static gboolean get_catalogue (gpointer data)
 static void load_catalogue (int success)
 {
     hide_message ();
-    gtk_widget_set_sensitive (close_btn, TRUE);
 
     if (success && read_data_file (catpath)) return;
 
@@ -701,12 +717,10 @@ int main (int argc, char *argv[])
     gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (items_iv), 7);
     gtk_icon_view_set_text_column (GTK_ICON_VIEW (items_iv), 1);
     gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (items_iv), 2);
-    g_signal_connect (items_iv, "item-activated", G_CALLBACK (item_selected), NULL);
 
+    g_signal_connect (items_iv, "item-activated", G_CALLBACK (item_selected), NULL);
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
-
-    gtk_widget_set_sensitive (close_btn, FALSE);
 
     gtk_window_set_default_size (GTK_WINDOW (main_dlg), 640, 400);
     gtk_widget_show_all (main_dlg);
