@@ -49,6 +49,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <curl/curl.h>
 
+/*----------------------------------------------------------------------------*/
+/* Macros                                                                     */
+/*----------------------------------------------------------------------------*/
+
 #define COVER_SIZE      128
 #define TITLE_LENGTH    25
 
@@ -56,13 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
 
-/* Termination function arguments */
-
-#define SUCCESS     1
-#define FAILURE     0
-#define CANCELLED  -1
-
-/* Columns in packages and categories list stores */
+/* Columns in item list store */
 
 #define ITEM_CATEGORY       0
 #define ITEM_TITLE          1
@@ -73,10 +71,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ITEM_DOWNLOADED     6
 #define ITEM_COVER          7
 
+/* Publication category */
+
 #define CAT_MAGPI           0
 #define CAT_BOOKS           1
 #define CAT_HSPACE          2
 #define CAT_WFRAME          3
+
+/* Termination function arguments */
+
+typedef enum {
+    CANCELLED = -1,
+    FAILURE = 0,
+    SUCCESS = 1
+} tf_status;
 
 /*----------------------------------------------------------------------------*/
 /* Globals                                                                    */
@@ -94,8 +102,10 @@ static GdkPixbuf *cloud, *grey, *nocover, *nodl;
 /* Data store for icon grid */
 
 GtkListStore *items;
-GtkTreeIter selitem;
-GtkTreeIter covitem;
+
+/* Download items */
+
+GtkTreeIter selitem, covitem;
 
 /* Catalogue file path */
 
@@ -107,9 +117,8 @@ CURL *http_handle;
 CURLM *multi_handle;
 FILE *outfile;
 guint curl_timer;
-void (*term_fn) (int success);
-char *fname;
-char *tmpname;
+void (*term_fn) (tf_status success);
+char *fname, *tmpname;
 gboolean have_bytes;
 
 /* Flags to manage simulataneous download of art and PDF */
@@ -125,22 +134,22 @@ static char *get_shell_string (char *cmd);
 static gboolean net_available (void);
 static void create_dir (char *dir);
 static void copy_file (char *src, char *dst);
-static void start_curl_download (char *url, char *file, void (*end_fn)(int success));
+static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
 static gboolean curl_poll (gpointer data);
-static void finish_curl_download (int success);
+static void finish_curl_download (tf_status success);
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
 static void abort_curl_download (void);
 static GdkPixbuf *get_cover (const char *filename);
 static void update_cover_entry (char *lpath, int dl);
 static gboolean find_cover_for_item (gpointer data);
-static void image_download_done (int success);
+static void image_download_done (tf_status success);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void open_pdf (char *path);
 static gboolean reset_cursor (gpointer data);
-static void pdf_download_done (int success);
+static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
 static gboolean get_catalogue (gpointer data);
-static void load_catalogue (int success);
+static void load_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
@@ -230,7 +239,7 @@ static void copy_file (char *src, char *dst)
 /* libcurl interface                                                          */
 /*----------------------------------------------------------------------------*/
 
-static void start_curl_download (char *url, char *file, void (*end_fn)(int success))
+static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success))
 {
     have_bytes = FALSE;
     term_fn = end_fn;
@@ -273,7 +282,7 @@ static gboolean curl_poll (gpointer data)
     }
 }
 
-static void finish_curl_download (int success)
+static void finish_curl_download (tf_status success)
 {
     if (!have_bytes) success = 0;
     if (outfile) fclose (outfile);
@@ -401,7 +410,7 @@ static gboolean find_cover_for_item (gpointer data)
 
 /* image_download_done - called on completed curl image download */
 
-static void image_download_done (int success)
+static void image_download_done (tf_status success)
 {
     gchar *lpath, *path;
     int dl;
@@ -457,8 +466,7 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
 
 static void open_pdf (char *path)
 {
-    //GdkCursor *busy = gdk_cursor_new (GDK_WATCH);
-    GdkCursor *busy = gdk_cursor_new_from_name (gdk_display_get_default (), "watch");
+    GdkCursor *busy = gdk_cursor_new_from_name (gdk_display_get_default (), "left_ptr_watch");
     gdk_window_set_cursor (gtk_widget_get_window (main_dlg), busy);
     g_timeout_add  (5000, reset_cursor, NULL);
     if (fork () == 0)
@@ -478,7 +486,7 @@ static gboolean reset_cursor (gpointer data)
 
 /* pdf_download_done - called on completed curl PDF download */
 
-static void pdf_download_done (int success)
+static void pdf_download_done (tf_status success)
 {
     gchar *cpath, *fpath, *lpath, *clpath;
 
@@ -547,7 +555,7 @@ static gboolean get_catalogue (gpointer data)
 
 /* get_catalogue - open a catalogue file - either main, backup or fallback */
 
-static void load_catalogue (int success)
+static void load_catalogue (tf_status success)
 {
     hide_message ();
 
