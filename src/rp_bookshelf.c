@@ -508,7 +508,7 @@ static void pdf_download_done (tf_status success)
         g_free (fpath);
         g_object_unref (cover);
     }
-    else if (success = CANCELLED) message (_("Download cancelled"), 1, -1);
+    else if (success == CANCELLED) message (_("Download cancelled"), 1, -1);
     else message (_("Unable to download file"), 1, -1);
 
     if (cover_dl) g_idle_add (find_cover_for_item, NULL);
@@ -543,7 +543,7 @@ static gboolean get_catalogue (gpointer data)
     catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
     cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
 
-    if (!net_available ()) load_catalogue (FALSE);
+    if (!net_available ()) load_catalogue (FAILURE);
     else
     {
         message (_("Reading list of publications - please wait..."), 0 , 0);
@@ -560,7 +560,7 @@ static void load_catalogue (tf_status success)
     hide_message ();
 
     if (success == SUCCESS && read_data_file (catpath)) return;
-    if (success = CANCELLED) message (_("Download cancelled"), 1, -1);
+    if (success == CANCELLED) message (_("Download cancelled"), 1, -1);
     else message (_("Unable to download updates"), 1, -1);
     copy_file (cbpath, catpath);
     if (read_data_file (catpath)) return;
