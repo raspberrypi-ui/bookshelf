@@ -306,7 +306,11 @@ static int progress_func (GtkWidget *bar, double t, double d, double ultotal, do
     if (prog >= 0.0 && prog <= 1.0)
     {
         have_bytes = TRUE;
-        if (msg_pb) gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), prog);
+        if (msg_pb)
+        {
+            if (pdf_dl_req) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+            else gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), prog);
+        }
     }
     return 0;
 }
