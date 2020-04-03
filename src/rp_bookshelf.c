@@ -49,9 +49,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <curl/curl.h>
 
-#define COVER_SIZE 128
+#define COVER_SIZE      128
+#define TITLE_LENGTH    25
 
-#define CATALOGUE_URL   "https://magazines-static.raspberrypi.org/cat.xml"
+#define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
 
@@ -120,7 +121,7 @@ static void create_dir (char *dir);
 static void copy_file (char *src, char *dst);
 static void start_curl_download (char *url, char *file, void (*end_fn)(gboolean success));
 static gboolean curl_poll (gpointer data);
-static void finish_curl_download (int success);
+static void finish_curl_download (gboolean success);
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
 static void abort_curl_download (void);
 static GdkPixbuf *get_cover (const char *filename);
@@ -253,18 +254,18 @@ static gboolean curl_poll (gpointer data)
     int still_running;
     if (curl_multi_perform (multi_handle, &still_running) != CURLE_OK)
     {
-        finish_curl_download (0);
+        finish_curl_download (FALSE);
         return FALSE;
     }
     if (still_running) return TRUE;
     else
     {
-        finish_curl_download (1);
+        finish_curl_download (TRUE);
         return FALSE;
     }
 }
 
-static void finish_curl_download (int success)
+static void finish_curl_download (gboolean success)
 {
     if (!have_bytes) success = 0;
     if (outfile) fclose (outfile);
@@ -513,7 +514,7 @@ static gboolean get_catalogue (gpointer data)
     catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
     cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
 
-    if (!net_available ()) load_catalogue (0);
+    if (!net_available ()) load_catalogue (FALSE);
     else
     {
         message (_("Reading list of publications - please wait..."), 0 , 0);
@@ -547,8 +548,11 @@ static void get_param (char *linebuf, char *name, char **dest)
     {
         p1 += strlen (name);
         p2 = strchr (p1, '<');
-        *p2 = 0;
-        *dest = g_strdup (p1);
+        if (p2)
+        {
+            *p2 = 0;
+            *dest = g_strdup (p1);
+        }
     }
 }
 
@@ -571,22 +575,33 @@ static int read_data_file (char *path)
                 if (strstr (linebuf, "</ITEM>"))
                 {
                     // item end flag - add the entry
-                    downloaded = FALSE;
-                    if (pdfpath)
+                    if (title && desc && covpath && pdfpath)
                     {
-                        gchar *lpath = get_local_path (pdfpath, PDF_PATH);
-                        if (access (lpath, F_OK) != -1) downloaded = TRUE;
-                        g_free (lpath);
+                        downloaded = FALSE;
+                        if (pdfpath)
+                        {
+                            gchar *lpath = get_local_path (pdfpath, PDF_PATH);
+                            if (access (lpath, F_OK) != -1) downloaded = TRUE;
+                            g_free (lpath);
+                        }
+                        if (strlen (title) > TITLE_LENGTH)
+                        {
+                            title[TITLE_LENGTH - 3] = '.';
+                            title[TITLE_LENGTH - 2] = '.';
+                            title[TITLE_LENGTH - 1] = '.';
+                            title[TITLE_LENGTH] = 0;
+                        }
+                        gtk_list_store_append (items, &entry);
+                        gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
+                            ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
+                            ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     }
-                    gtk_list_store_append (items, &entry);
-                    gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
-                        ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
-                        ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     in_item = FALSE;
                     g_free (title);
                     g_free (desc);
                     g_free (covpath);
                     g_free (pdfpath);
+                    title = desc = covpath = pdfpath = NULL;
                     count++;
                 }
                 get_param (linebuf, "<TITLE>", &title);
