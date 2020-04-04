@@ -93,7 +93,7 @@ typedef enum {
 /* Controls */
 
 static GtkWidget *main_dlg, *items_iv, *close_btn;
-static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_cancel, *msg_pbv;
+static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
 /* Preloaded default pixbufs */
 
@@ -363,8 +363,10 @@ static GdkPixbuf *get_cover (const char *filename)
 
 static void update_cover_entry (char *lpath, int dl)
 {
+    GdkPixbuf *cover;
     int w, h;
-    GdkPixbuf *cover = get_cover (lpath);
+
+    cover = get_cover (lpath);
     if (!dl)
     {
         w = gdk_pixbuf_get_width (cover);
@@ -381,7 +383,7 @@ static void update_cover_entry (char *lpath, int dl)
 static gboolean find_cover_for_item (gpointer data)
 {
     int dl;
-    gchar *path, *lpath;
+    gchar *cpath, *clpath;
 
     if (pdf_dl_req)
     {
@@ -389,13 +391,13 @@ static gboolean find_cover_for_item (gpointer data)
         return FALSE;
     }
 
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
-    lpath = get_local_path (path, CACHE_PATH);
-    if (access (lpath, F_OK) != -1)
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &cpath, ITEM_DOWNLOADED, &dl, -1);
+    clpath = get_local_path (cpath, CACHE_PATH);
+    if (access (clpath, F_OK) != -1)
     {
-        update_cover_entry (lpath, dl);
-        g_free (lpath);
-        g_free (path);
+        update_cover_entry (clpath, dl);
+        g_free (clpath);
+        g_free (cpath);
 
         if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem)) return TRUE;
         else
@@ -408,7 +410,9 @@ static gboolean find_cover_for_item (gpointer data)
     }
     else
     {
-        start_curl_download (path, lpath, image_download_done);
+        start_curl_download (cpath, clpath, image_download_done);
+        g_free (clpath);
+        g_free (cpath);
         return FALSE;
     }
 }
@@ -417,16 +421,16 @@ static gboolean find_cover_for_item (gpointer data)
 
 static void image_download_done (tf_status success)
 {
-    gchar *lpath, *path;
+    gchar *cpath, *clpath;
     int dl;
 
     if (success == SUCCESS)
     {
-        gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &path, ITEM_DOWNLOADED, &dl, -1);
-        lpath = get_local_path (path, CACHE_PATH);
-        update_cover_entry (lpath, dl);
-        g_free (lpath);
-        g_free (path);
+        gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &cpath, ITEM_DOWNLOADED, &dl, -1);
+        clpath = get_local_path (cpath, CACHE_PATH);
+        update_cover_entry (clpath, dl);
+        g_free (clpath);
+        g_free (cpath);
     }
 
     if (gtk_tree_model_iter_next (GTK_TREE_MODEL (items), &covitem))
@@ -448,21 +452,21 @@ static void image_download_done (tf_status success)
 
 static void pdf_selected (void)
 {
-    gchar *lpath, *fpath;
+    gchar *ppath, *plpath;
 
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &fpath, -1);
-    lpath = get_local_path (fpath, PDF_PATH);
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, -1);
+    plpath = get_local_path (ppath, PDF_PATH);
 
-    if (access (lpath, F_OK) == -1)
+    if (access (plpath, F_OK) == -1)
     {
         message (_("Downloading - please wait..."), 0 , 0);
-        if (!cover_dl) start_curl_download (fpath, lpath, pdf_download_done);
+        if (!cover_dl) start_curl_download (ppath, plpath, pdf_download_done);
         else pdf_dl_req = TRUE;
     }
-    else open_pdf (lpath);
+    else open_pdf (plpath);
 
-    g_free (fpath);
-    g_free (lpath);
+    g_free (plpath);
+    g_free (ppath);
 }
 
 /* open_pdf - launches qpdfview with supplied file */
@@ -491,24 +495,24 @@ static gboolean reset_cursor (gpointer data)
 
 static void pdf_download_done (tf_status success)
 {
-    gchar *cpath, *fpath, *lpath, *clpath;
+    gchar *cpath, *ppath, *clpath, *plpath;
 
     hide_message ();
     if (success == SUCCESS)
     {
-        gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &fpath, -1);
-        lpath = get_local_path (fpath, PDF_PATH);
+        gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &ppath, -1);
+        plpath = get_local_path (ppath, PDF_PATH);
         clpath = get_local_path (cpath, CACHE_PATH);
-        open_pdf (lpath);
+        open_pdf (plpath);
 
         GdkPixbuf *cover = get_cover (clpath);
         gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 1, -1);
         gtk_widget_queue_draw (items_iv);
 
-        g_free (lpath);
-        g_free (cpath);
+        g_free (plpath);
         g_free (clpath);
-        g_free (fpath);
+        g_free (ppath);
+        g_free (cpath);
         g_object_unref (cover);
     }
     else if (success == CANCELLED) message (_("Download cancelled"), 1, -1);
@@ -521,17 +525,17 @@ static void pdf_download_done (tf_status success)
 
 static void get_pending_pdf (void)
 {
-    gchar *lpath, *fpath;
+    gchar *ppath, *plpath;
 
     pdf_dl_req = FALSE;
 
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &fpath, -1);
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, -1);
 
-    lpath = get_local_path (fpath, PDF_PATH);
-    start_curl_download (fpath, lpath, pdf_download_done);
+    plpath = get_local_path (ppath, PDF_PATH);
+    start_curl_download (ppath, plpath, pdf_download_done);
 
-    g_free (fpath);
-    g_free (lpath);
+    g_free (plpath);
+    g_free (ppath);
 }
 
 
@@ -705,7 +709,7 @@ static void message (char *msg, int wait, int prog)
 
         msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
         msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "msg_pb");
-        msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "msg_btn");
+        msg_ok = (GtkWidget *) gtk_builder_get_object (builder, "msg_btn");
         msg_cancel = (GtkWidget *) gtk_builder_get_object (builder, "msg_cancel");
 
         gtk_label_set_text (GTK_LABEL (msg_msg), msg);
@@ -717,26 +721,16 @@ static void message (char *msg, int wait, int prog)
 
     if (wait)
     {
+        g_signal_connect (msg_ok, "clicked", G_CALLBACK (ok_clicked), NULL);
+        gtk_widget_set_visible (msg_cancel, FALSE);
+        gtk_widget_set_visible (msg_ok, TRUE);
         gtk_widget_set_visible (msg_pb, FALSE);
-        if (wait > 1)
-        {
-            gtk_button_set_label (GTK_BUTTON (msg_btn), "_Yes");
-            g_signal_connect (msg_cancel, "clicked", G_CALLBACK (ok_clicked), NULL);
-            gtk_widget_set_visible (msg_cancel, TRUE);
-        }
-        else
-        {
-            gtk_button_set_label (GTK_BUTTON (msg_btn), "_OK");
-            g_signal_connect (msg_btn, "clicked", G_CALLBACK (ok_clicked), NULL);
-            gtk_widget_set_visible (msg_cancel, FALSE);
-        }
-        gtk_widget_set_visible (msg_btn, TRUE);
     }
     else
     {
         g_signal_connect (msg_cancel, "clicked", G_CALLBACK (cancel_clicked), NULL);
         gtk_widget_set_visible (msg_cancel, TRUE);
-        gtk_widget_set_visible (msg_btn, FALSE);
+        gtk_widget_set_visible (msg_ok, FALSE);
         gtk_widget_set_visible (msg_pb, TRUE);
         if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
         else
