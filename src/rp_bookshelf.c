@@ -103,11 +103,13 @@ static GdkPixbuf *cloud, *grey, *nocover, *nodl;
 
 GtkListStore *items;
 
+/* Filtered versions of the above */
+
+GtkTreeModel *books, *mags;
+
 /* Download items */
 
 GtkTreeIter selitem, covitem;
-
-GtkTreeModel *books, *mags;
 
 /* Catalogue file path */
 
@@ -152,6 +154,7 @@ static gboolean get_catalogue (gpointer data);
 static void load_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
+static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
 static gboolean cancel_clicked (GtkButton *button, gpointer data);
 static void message (char *msg, gboolean wait);
@@ -630,6 +633,16 @@ static int read_data_file (char *path)
     return count;
 }
 
+/* match_category - filter function for tab pages */
+
+static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+{
+    int cat;
+
+    gtk_tree_model_get (model, iter, ITEM_CATEGORY, &cat, -1);
+    return (cat == (int) data);
+}
+
 
 /*----------------------------------------------------------------------------*/
 /* Message box                                                                */
@@ -724,15 +737,6 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
 static void close_prog (GtkButton* btn, gpointer ptr)
 {
     gtk_main_quit ();
-}
-
-static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
-{
-    int cat;
-
-    gtk_tree_model_get (model, iter, ITEM_CATEGORY, &cat, -1);
-    if (cat == (int) data) return TRUE;
-    return FALSE;
 }
 
 
