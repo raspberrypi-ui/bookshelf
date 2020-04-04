@@ -92,7 +92,7 @@ typedef enum {
 
 /* Controls */
 
-static GtkWidget *main_dlg, *items_iv, *close_btn;
+static GtkWidget *main_dlg, *mags_iv, *books_iv, *close_btn;
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
 /* Preloaded default pixbufs */
@@ -106,6 +106,8 @@ GtkListStore *items;
 /* Download items */
 
 GtkTreeIter selitem, covitem;
+
+GtkTreeModel *books, *mags;
 
 /* Catalogue file path */
 
@@ -364,7 +366,8 @@ static gboolean find_cover_for_item (gpointer data)
         else
         {
             cover_dl = FALSE;
-            gtk_widget_queue_draw (items_iv);
+            gtk_widget_queue_draw (mags_iv);
+            gtk_widget_queue_draw (books_iv);
             if (pdf_dl_req) get_pending_pdf ();
             return FALSE;
         }
@@ -399,7 +402,8 @@ static void image_download_done (tf_status success)
     else
     {
         cover_dl = FALSE;
-        gtk_widget_queue_draw (items_iv);
+        gtk_widget_queue_draw (mags_iv);
+        gtk_widget_queue_draw (books_iv);
         if (pdf_dl_req) get_pending_pdf ();
     }
 }
@@ -468,7 +472,8 @@ static void pdf_download_done (tf_status success)
 
         GdkPixbuf *cover = get_cover (clpath);
         gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 1, -1);
-        gtk_widget_queue_draw (items_iv);
+        gtk_widget_queue_draw (mags_iv);
+        gtk_widget_queue_draw (books_iv);
 
         g_free (plpath);
         g_free (clpath);
@@ -709,13 +714,25 @@ static void hide_message (void)
 
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
 {
-    gtk_tree_model_get_iter (GTK_TREE_MODEL (items), &selitem, path);
+    GtkTreeIter fitem;
+    gtk_tree_model_get_iter (GTK_TREE_MODEL (user_data), &fitem, path);
+    gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (user_data), &selitem, &fitem);
+
     pdf_selected ();
 }
 
 static void close_prog (GtkButton* btn, gpointer ptr)
 {
     gtk_main_quit ();
+}
+
+static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
+{
+    int cat;
+
+    gtk_tree_model_get (model, iter, ITEM_CATEGORY, &cat, -1);
+    if (cat == (int) data) return TRUE;
+    return FALSE;
 }
 
 
@@ -760,19 +777,31 @@ int main (int argc, char *argv[])
     gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/rp_bookshelf.ui", NULL);
 
     main_dlg = (GtkWidget *) gtk_builder_get_object (builder, "main_window");
-    items_iv = (GtkWidget *) gtk_builder_get_object (builder, "iconview_items");
+    mags_iv = (GtkWidget *) gtk_builder_get_object (builder, "iconview_mags");
+    books_iv = (GtkWidget *) gtk_builder_get_object (builder, "iconview_books");
     close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
 
     // create list store
     items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF); 
 
-    // set up icon view
-    gtk_icon_view_set_model (GTK_ICON_VIEW (items_iv), GTK_TREE_MODEL (items));
-    gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (items_iv), 7);
-    gtk_icon_view_set_text_column (GTK_ICON_VIEW (items_iv), 1);
-    gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (items_iv), 2);
+    // create filtered lists
+    books = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
+    gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (books), (GtkTreeModelFilterVisibleFunc) match_category, (gpointer) CAT_BOOKS, NULL);
+    mags = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
+    gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (mags), (GtkTreeModelFilterVisibleFunc) match_category, (gpointer) CAT_MAGPI, NULL);
 
-    g_signal_connect (items_iv, "item-activated", G_CALLBACK (item_selected), NULL);
+    // set up icon views
+    gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (mags_iv), 7);
+    gtk_icon_view_set_text_column (GTK_ICON_VIEW (mags_iv), 1);
+    gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (mags_iv), 2);
+    gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (books_iv), 7);
+    gtk_icon_view_set_text_column (GTK_ICON_VIEW (books_iv), 1);
+    gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (books_iv), 2);
+    gtk_icon_view_set_model (GTK_ICON_VIEW (mags_iv), mags);
+    gtk_icon_view_set_model (GTK_ICON_VIEW (books_iv), books);
+
+    g_signal_connect (mags_iv, "item-activated", G_CALLBACK (item_selected), mags);
+    g_signal_connect (books_iv, "item-activated", G_CALLBACK (item_selected), books);
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
 
