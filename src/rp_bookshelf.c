@@ -803,7 +803,7 @@ int main (int argc, char *argv[])
     gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/rp_bookshelf.ui", NULL);
 
     main_dlg = (GtkWidget *) gtk_builder_get_object (builder, "main_window");
-    items_iv = (GtkWidget *) gtk_builder_get_object (builder, "treeview_prog");
+    items_iv = (GtkWidget *) gtk_builder_get_object (builder, "iconview_items");
     close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
 
     // create list store
