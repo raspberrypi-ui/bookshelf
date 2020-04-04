@@ -130,8 +130,6 @@ gboolean cover_dl, pdf_dl_req;
 /*----------------------------------------------------------------------------*/
 
 static char *get_local_path (char *path, const char *dir);
-static char *get_shell_string (char *cmd);
-static gboolean net_available (void);
 static void create_dir (char *dir);
 static void copy_file (char *src, char *dst);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
@@ -171,43 +169,6 @@ static char *get_local_path (char *path, const char *dir)
     gchar *rpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), dir, basename);
     g_free (basename);
     return rpath;
-}
-
-/* get_shell_string - read a string in response to a shell command */
-
-static char *get_shell_string (char *cmd)
-{
-    char *line = NULL, *res = NULL;
-    size_t len = 0;
-    FILE *fp = popen (cmd, "r");
-
-    if (fp == NULL) return g_strdup ("");
-    if (getline (&line, &len, fp) > 0)
-    {
-        g_strdelimit (line, "\n\r", 0);
-        res = line;
-        while (*res++) if (g_ascii_isspace (*res)) *res = 0;
-        res = g_strdup (line);
-    }
-    pclose (fp);
-    g_free (line);
-    return res ? res : g_strdup ("");
-}
-
-/* net_available - determine whether there is a current network connection */
-
-static gboolean net_available (void)
-{
-    char *ip;
-    gboolean val = FALSE;
-
-    ip = get_shell_string ("hostname -I | tr ' ' \\\\n | grep \\\\. | tr \\\\n ','");
-    if (ip)
-    {
-        if (strlen (ip)) val = TRUE;
-        g_free (ip);
-    }
-    return val;
 }
 
 /* create dir - create a directory if it doesn't exist */
@@ -254,7 +215,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     {
         g_free (fname);
         g_free (tmpname);
-        end_fn (0);
+        end_fn (FAILURE);
     }
 
     curl_easy_setopt (http_handle, CURLOPT_URL, url);
@@ -543,20 +504,16 @@ static void get_pending_pdf (void)
 /* Catalogue management                                                       */
 /*----------------------------------------------------------------------------*/
 
-/* get_catalogue - start a catalogue download if there is a net connection */
+/* get_catalogue - start a catalogue download */
 
 static gboolean get_catalogue (gpointer data)
 {
     catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
     cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
 
-    if (!net_available ()) load_catalogue (FAILURE);
-    else
-    {
-        message (_("Reading list of publications - please wait..."), FALSE);
-        copy_file (catpath, cbpath);
-        start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
-    }
+    message (_("Reading list of publications - please wait..."), FALSE);
+    copy_file (catpath, cbpath);
+    start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
     return FALSE;
 }
 
@@ -825,9 +782,9 @@ int main (int argc, char *argv[])
     msg_pb = NULL;
 
     // update catalogue
-    g_idle_add (get_catalogue, NULL);
     cover_dl = FALSE;
     pdf_dl_req = FALSE;
+    g_idle_add (get_catalogue, NULL);
 
     gtk_main ();
 
