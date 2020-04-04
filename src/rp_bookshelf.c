@@ -154,7 +154,7 @@ static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
 static gboolean cancel_clicked (GtkButton *button, gpointer data);
-static void message (char *msg, int wait, int prog);
+static void message (char *msg, gboolean wait);
 static void hide_message (void);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void close_prog (GtkButton* btn, gpointer ptr);
@@ -459,7 +459,7 @@ static void pdf_selected (void)
 
     if (access (plpath, F_OK) == -1)
     {
-        message (_("Downloading - please wait..."), 0 , 0);
+        message (_("Downloading - please wait..."), FALSE);
         if (!cover_dl) start_curl_download (ppath, plpath, pdf_download_done);
         else pdf_dl_req = TRUE;
     }
@@ -515,8 +515,8 @@ static void pdf_download_done (tf_status success)
         g_free (cpath);
         g_object_unref (cover);
     }
-    else if (success == CANCELLED) message (_("Download cancelled"), 1, -1);
-    else message (_("Unable to download file"), 1, -1);
+    else if (success == CANCELLED) message (_("Download cancelled"), TRUE);
+    else message (_("Unable to download file"), TRUE);
 
     if (cover_dl) g_idle_add (find_cover_for_item, NULL);
 }
@@ -553,7 +553,7 @@ static gboolean get_catalogue (gpointer data)
     if (!net_available ()) load_catalogue (FAILURE);
     else
     {
-        message (_("Reading list of publications - please wait..."), 0 , 0);
+        message (_("Reading list of publications - please wait..."), FALSE);
         copy_file (catpath, cbpath);
         start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
     }
@@ -567,8 +567,8 @@ static void load_catalogue (tf_status success)
     hide_message ();
 
     if (success == SUCCESS && read_data_file (catpath)) return;
-    if (success == CANCELLED) message (_("Download cancelled"), 1, -1);
-    else message (_("Unable to download updates"), 1, -1);
+    if (success == CANCELLED) message (_("Download cancelled"), TRUE);
+    else message (_("Unable to download updates"), TRUE);
     copy_file (cbpath, catpath);
     if (read_data_file (catpath)) return;
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
@@ -685,7 +685,7 @@ static gboolean cancel_clicked (GtkButton *button, gpointer data)
     return FALSE;
 }
 
-static void message (char *msg, int wait, int prog)
+static void message (char *msg, gboolean wait)
 {
     if (!msg_dlg)
     {
@@ -732,12 +732,7 @@ static void message (char *msg, int wait, int prog)
         gtk_widget_set_visible (msg_cancel, TRUE);
         gtk_widget_set_visible (msg_ok, FALSE);
         gtk_widget_set_visible (msg_pb, TRUE);
-        if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-        else
-        {
-            float progress = prog / 100.0;
-            gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), progress);
-        }
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), 0.0);
     }
 }
 
