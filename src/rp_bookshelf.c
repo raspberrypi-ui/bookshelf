@@ -520,7 +520,6 @@ static gboolean get_catalogue (gpointer data)
     cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
 
     message (_("Reading list of publications - please wait..."), FALSE);
-    copy_file (catpath, cbpath);
     start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
     return FALSE;
 }
@@ -531,11 +530,14 @@ static void load_catalogue (tf_status success)
 {
     hide_message ();
 
-    if (success == SUCCESS && read_data_file (catpath)) return;
+    if (success == SUCCESS && read_data_file (catpath))
+    {
+        copy_file (catpath, cbpath);
+        return;
+    }
     if (success == CANCELLED) message (_("Download cancelled"), TRUE);
     else message (_("Unable to download updates"), TRUE);
-    copy_file (cbpath, catpath);
-    if (read_data_file (catpath)) return;
+    if (read_data_file (cbpath)) return;
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
 }
 
