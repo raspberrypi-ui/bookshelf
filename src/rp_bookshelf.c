@@ -630,7 +630,7 @@ static int read_data_file (char *path)
                             if (access (lpath, F_OK) != -1) downloaded = TRUE;
                             g_free (lpath);
                         }
-                        if (strlen (dhtitle) > TITLE_LENGTH)
+                        if (strlen (title) > TITLE_LENGTH)
                         {
                             title[TITLE_LENGTH - 3] = '.';
                             title[TITLE_LENGTH - 2] = '.';
