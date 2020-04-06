@@ -128,7 +128,8 @@ FILE *outfile;
 guint curl_timer;
 void (*term_fn) (tf_status success);
 char *fname, *tmpname;
-gboolean have_bytes;
+gboolean cancelled;
+tf_status downstat;
 
 /* Flags to manage simultaneous download of art and PDF */
 
@@ -145,9 +146,8 @@ static unsigned long int get_val (char *cmd);
 static double free_space (void);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
 static gboolean curl_poll (gpointer data);
-static void finish_curl_download (tf_status success);
+static void finish_curl_download (void);
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
-static void abort_curl_download (gboolean by_user);
 static GdkPixbuf *get_cover (const char *filename);
 static void update_cover_entry (char *lpath, int dl);
 static gboolean find_cover_for_item (gpointer data);
@@ -257,7 +257,8 @@ static double free_space (void)
 
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success))
 {
-    have_bytes = FALSE;
+    cancelled = FALSE;
+    downstat = FAILURE;
     term_fn = end_fn;
     http_handle = curl_easy_init ();
     multi_handle = curl_multi_init ();
@@ -269,7 +270,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     {
         g_free (fname);
         g_free (tmpname);
-        end_fn (FAILURE);
+        term_fn (FAILURE);
     }
 
     curl_easy_setopt (http_handle, CURLOPT_URL, url);
@@ -287,22 +288,22 @@ static gboolean curl_poll (gpointer data)
     int still_running;
     if (curl_multi_perform (multi_handle, &still_running) != CURLE_OK)
     {
-        finish_curl_download (FAILURE);
+        downstat = FAILURE;
+        finish_curl_download ();
         return FALSE;
     }
     if (still_running) return TRUE;
     else
     {
-        finish_curl_download (SUCCESS);
+        finish_curl_download ();
         return FALSE;
     }
 }
 
-static void finish_curl_download (tf_status success)
+static void finish_curl_download (void)
 {
-    if (!have_bytes) success = 0;
     if (outfile) fclose (outfile);
-    if (success) rename (tmpname, fname);
+    if (downstat == SUCCESS) rename (tmpname, fname);
     else remove (tmpname);
 
     curl_multi_remove_handle (multi_handle, http_handle);
@@ -313,22 +314,27 @@ static void finish_curl_download (tf_status success)
     g_free (fname);
     g_free (tmpname);
 
-    term_fn (success);
+    term_fn (downstat);
 }
 
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow)
 {
     double prog = d / t;
+    if (cancelled)
+    {
+        downstat = CANCELLED;
+        return 1;
+    }
     if (prog >= 0.0 && prog <= 1.0)
     {
-        if (!have_bytes)
+        if (downstat == FAILURE)
         {
             if (t + MIN_SPACE >= free_space ())
             {
-                abort_curl_download (FALSE);
-                return 0;
+                downstat = NOSPACE;
+                return 1;
             }
-            have_bytes = TRUE;
+            downstat = SUCCESS;
         }
         if (msg_pb)
         {
@@ -337,26 +343,6 @@ static int progress_func (GtkWidget *bar, double t, double d, double ultotal, do
         }
     }
     return 0;
-}
-
-static void abort_curl_download (gboolean by_user)
-{
-    g_source_remove (curl_timer);
-    hide_message ();
-
-    if (outfile) fclose (outfile);
-    remove (tmpname);
-
-    curl_multi_remove_handle (multi_handle, http_handle);
-    curl_easy_cleanup (http_handle);
-    curl_multi_cleanup (multi_handle);
-    curl_global_cleanup ();
-
-    g_free (fname);
-    g_free (tmpname);
-
-    if (by_user) term_fn (CANCELLED);
-    else term_fn (NOSPACE);
 }
 
 
@@ -715,7 +701,7 @@ static gboolean ok_clicked (GtkButton *button, gpointer data)
 
 static gboolean cancel_clicked (GtkButton *button, gpointer data)
 {
-    abort_curl_download (TRUE);
+    cancelled = TRUE;
     return FALSE;
 }
 
