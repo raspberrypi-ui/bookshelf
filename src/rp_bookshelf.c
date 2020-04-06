@@ -159,7 +159,6 @@ static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
 static gboolean get_catalogue (gpointer data);
 static void load_catalogue (tf_status success);
-static char *dehtml_string (char *in);
 static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
 static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
@@ -585,46 +584,6 @@ static void load_catalogue (tf_status success)
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
 }
 
-/* dehtml_string - replace XML special character codes */
-
-static char *dehtml_string (char *in)
-{
-    char *out = g_strdup (in);
-    char symbol[16], *sym;
-    char *ip = in, *op = out;
-    gboolean inamp = FALSE;
-
-    while (*ip)
-    {
-        if (inamp)
-        {
-            if (*ip == ';')
-            {
-                *sym = 0;
-                if (!g_strcmp0 (symbol, "amp")) *op++ = '&';
-                if (!g_strcmp0 (symbol, "lt")) *op++ = '<';
-                if (!g_strcmp0 (symbol, "gt")) *op++ = '>';
-                if (!g_strcmp0 (symbol, "quot")) *op++ = '"';
-                inamp = FALSE;
-            }
-            else *sym++ = *ip;
-        }
-        else
-        {
-            if (*ip == '&')
-            {
-                sym = symbol;
-                inamp = TRUE;
-            }
-            else *op++ = *ip;
-        }
-        ip++;
-    }
-    *op = 0;
-    g_free (in);
-    return out;
-}
-
 /* get_param - helper function to look for tag in line */
 
 static void get_param (char *linebuf, char *name, char **dest)
@@ -647,7 +606,7 @@ static void get_param (char *linebuf, char *name, char **dest)
 
 static int read_data_file (char *path)
 {
-    char *linebuf = NULL, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL, *dhtitle, *dhdesc;
+    char *linebuf = NULL, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL;
     size_t nchars = 0;
     GtkTreeIter entry;
     int category = -1, in_item = FALSE, downloaded, count = 0;
@@ -665,8 +624,6 @@ static int read_data_file (char *path)
                     if (title && desc && covpath && pdfpath)
                     {
                         downloaded = FALSE;
-                        dhtitle = dehtml_string (title);
-                        dhdesc = dehtml_string (desc);
                         if (pdfpath)
                         {
                             gchar *lpath = get_local_path (pdfpath, PDF_PATH);
@@ -675,14 +632,14 @@ static int read_data_file (char *path)
                         }
                         if (strlen (dhtitle) > TITLE_LENGTH)
                         {
-                            dhtitle[TITLE_LENGTH - 3] = '.';
-                            dhtitle[TITLE_LENGTH - 2] = '.';
-                            dhtitle[TITLE_LENGTH - 1] = '.';
-                            dhtitle[TITLE_LENGTH] = 0;
+                            title[TITLE_LENGTH - 3] = '.';
+                            title[TITLE_LENGTH - 2] = '.';
+                            title[TITLE_LENGTH - 1] = '.';
+                            title[TITLE_LENGTH] = 0;
                         }
                         gtk_list_store_append (items, &entry);
-                        gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, dhtitle,
-                            ITEM_DESC, dhdesc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
+                        gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
+                            ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
                             ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     }
                     in_item = FALSE;
@@ -911,7 +868,7 @@ int main (int argc, char *argv[])
         filtered[i] = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
         gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filtered[i]), (GtkTreeModelFilterVisibleFunc) match_category, (gpointer) i, NULL);
         gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (item_ivs[i]), 7);
-        gtk_icon_view_set_text_column (GTK_ICON_VIEW (item_ivs[i]), 1);
+        gtk_icon_view_set_markup_column (GTK_ICON_VIEW (item_ivs[i]), 1);
         gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (item_ivs[i]), 2);
         gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), filtered[i]);
         g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (item_selected), filtered[i]);
