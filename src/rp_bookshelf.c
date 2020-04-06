@@ -643,8 +643,8 @@ static int read_data_file (char *path)
                             ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     }
                     in_item = FALSE;
-                    g_free (dhtitle);
-                    g_free (dhdesc);
+                    g_free (title);
+                    g_free (desc);
                     g_free (covpath);
                     g_free (pdfpath);
                     title = desc = covpath = pdfpath = NULL;
