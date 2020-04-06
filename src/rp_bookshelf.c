@@ -528,9 +528,8 @@ static void pdf_download_done (tf_status success)
         g_free (cpath);
         g_object_unref (cover);
     }
-    else if (success == CANCELLED) message (_("Download cancelled"), TRUE);
+    else if (success == FAILURE) message (_("Unable to download file"), TRUE);
     else if (success == NOSPACE) message (_("Disk full - unable to download file"), TRUE);
-    else message (_("Unable to download file"), TRUE);
 
     if (cover_dl) g_idle_add (find_cover_for_item, NULL);
 }
@@ -580,9 +579,8 @@ static void load_catalogue (tf_status success)
         copy_file (catpath, cbpath);
         return;
     }
-    if (success == CANCELLED) message (_("Download cancelled"), TRUE);
-    else if (success == NOSPACE) message (_("Disk full - unable to download updates"), TRUE);
-    else message (_("Unable to download updates"), TRUE);
+    if (success == NOSPACE) message (_("Disk full - unable to download updates"), TRUE);
+    else if (success == SUCCESS || success == FAILURE) message (_("Unable to download updates"), TRUE);
     if (read_data_file (cbpath)) return;
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
 }
