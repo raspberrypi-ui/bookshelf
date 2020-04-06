@@ -102,7 +102,7 @@ static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
 /* Preloaded default pixbufs */
 
-static GdkPixbuf *cloud, *grey, *nocover, *nodl;
+static GdkPixbuf *cloud, *grey, *nocover, *nodl, *newcorn;
 
 /* Data store for icon grid */
 
@@ -149,7 +149,7 @@ static gboolean curl_poll (gpointer data);
 static void finish_curl_download (void);
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
 static GdkPixbuf *get_cover (const char *filename);
-static void update_cover_entry (char *lpath, int dl);
+static void update_cover_entry (char *lpath, int dl, gboolean new);
 static gboolean find_cover_for_item (gpointer data);
 static void image_download_done (tf_status success);
 static void pdf_selected (void);
@@ -374,7 +374,7 @@ static GdkPixbuf *get_cover (const char *filename)
 
 /* update_cover_entry - uses the cover at lpath to update the cover info for covitem */
 
-static void update_cover_entry (char *lpath, int dl)
+static void update_cover_entry (char *lpath, int dl, gboolean new)
 {
     GdkPixbuf *cover;
     int w, h;
@@ -386,6 +386,12 @@ static void update_cover_entry (char *lpath, int dl)
         h = gdk_pixbuf_get_height (cover);
         gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
         gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+    }
+    if (new)
+    {
+        w = gdk_pixbuf_get_width (cover);
+        h = gdk_pixbuf_get_height (cover);
+        gdk_pixbuf_composite (newcorn, cover, w - 32, 0, 32, 32, w - 32, 0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
     }
     gtk_list_store_set (items, &covitem, ITEM_COVER, cover, -1);
     g_object_unref (cover);
@@ -408,7 +414,7 @@ static gboolean find_cover_for_item (gpointer data)
     clpath = get_local_path (cpath, CACHE_PATH);
     if (access (clpath, F_OK) != -1)
     {
-        update_cover_entry (clpath, dl);
+        update_cover_entry (clpath, dl, FALSE);
         g_free (clpath);
         g_free (cpath);
 
@@ -441,7 +447,7 @@ static void image_download_done (tf_status success)
     {
         gtk_tree_model_get (GTK_TREE_MODEL (items), &covitem, ITEM_COVPATH, &cpath, ITEM_DOWNLOADED, &dl, -1);
         clpath = get_local_path (cpath, CACHE_PATH);
-        update_cover_entry (clpath, dl);
+        update_cover_entry (clpath, dl, TRUE);
         g_free (clpath);
         g_free (cpath);
     }
@@ -906,6 +912,7 @@ int main (int argc, char *argv[])
 
     cloud = get_cover (PACKAGE_DATA_DIR "/cloud.png");
     grey = get_cover (PACKAGE_DATA_DIR "/grey.png");
+    newcorn = get_cover (PACKAGE_DATA_DIR "/new.png");
     nocover = get_cover (PACKAGE_DATA_DIR "/nocover.png");
     nodl = get_cover (PACKAGE_DATA_DIR "/nocover.png");
     i = gdk_pixbuf_get_width (nodl);
