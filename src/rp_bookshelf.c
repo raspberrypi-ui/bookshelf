@@ -54,7 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*----------------------------------------------------------------------------*/
 
 #define COVER_SIZE      128
-#define TITLE_LENGTH    25
+#define TITLE_LENGTH    24
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
@@ -939,9 +939,10 @@ int main (int argc, char *argv[])
     {
         filtered[i] = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
         gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filtered[i]), (GtkTreeModelFilterVisibleFunc) match_category, (gpointer) i, NULL);
-        gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (item_ivs[i]), 7);
-        gtk_icon_view_set_markup_column (GTK_ICON_VIEW (item_ivs[i]), 1);
-        gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (item_ivs[i]), 2);
+        gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_COVER);
+        gtk_icon_view_set_markup_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_TITLE);
+        gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_DESC);
+        gtk_icon_view_set_column_spacing (GTK_ICON_VIEW (item_ivs[i]), 50);
         gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), filtered[i]);
         g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (item_selected), filtered[i]);
         g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (icon_clicked), item_ivs[i]);
