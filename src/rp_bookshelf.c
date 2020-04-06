@@ -159,6 +159,7 @@ static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
 static gboolean get_catalogue (gpointer data);
 static void load_catalogue (tf_status success);
+static char *dehtml_string (char *in);
 static void get_param (char *linebuf, char *name, char **dest);
 static int read_data_file (char *path);
 static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
@@ -584,6 +585,46 @@ static void load_catalogue (tf_status success)
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
 }
 
+/* dehtml_string - replace XML special character codes */
+
+static char *dehtml_string (char *in)
+{
+    char *out = g_strdup (in);
+    char symbol[16], *sym;
+    char *ip = in, *op = out;
+    gboolean inamp = FALSE;
+
+    while (*ip)
+    {
+        if (inamp)
+        {
+            if (*ip == ';')
+            {
+                *sym = 0;
+                if (!g_strcmp0 (symbol, "amp")) *op++ = '&';
+                if (!g_strcmp0 (symbol, "lt")) *op++ = '<';
+                if (!g_strcmp0 (symbol, "gt")) *op++ = '>';
+                if (!g_strcmp0 (symbol, "quot")) *op++ = '"';
+                inamp = FALSE;
+            }
+            else *sym++ = *ip;
+        }
+        else
+        {
+            if (*ip == '&')
+            {
+                sym = symbol;
+                inamp = TRUE;
+            }
+            else *op++ = *ip;
+        }
+        ip++;
+    }
+    *op = 0;
+    g_free (in);
+    return out;
+}
+
 /* get_param - helper function to look for tag in line */
 
 static void get_param (char *linebuf, char *name, char **dest)
@@ -606,7 +647,7 @@ static void get_param (char *linebuf, char *name, char **dest)
 
 static int read_data_file (char *path)
 {
-    char *linebuf = NULL, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL;
+    char *linebuf = NULL, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL, *dhtitle, *dhdesc;
     size_t nchars = 0;
     GtkTreeIter entry;
     int category = -1, in_item = FALSE, downloaded, count = 0;
@@ -624,6 +665,8 @@ static int read_data_file (char *path)
                     if (title && desc && covpath && pdfpath)
                     {
                         downloaded = FALSE;
+                        dhtitle = dehtml_string (title);
+                        dhdesc = dehtml_string (desc);
                         if (pdfpath)
                         {
                             gchar *lpath = get_local_path (pdfpath, PDF_PATH);
@@ -638,13 +681,13 @@ static int read_data_file (char *path)
                             title[TITLE_LENGTH] = 0;
                         }
                         gtk_list_store_append (items, &entry);
-                        gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
-                            ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
+                        gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, dhtitle,
+                            ITEM_DESC, dhdesc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
                             ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     }
                     in_item = FALSE;
-                    g_free (title);
-                    g_free (desc);
+                    g_free (dhtitle);
+                    g_free (dhdesc);
                     g_free (covpath);
                     g_free (pdfpath);
                     title = desc = covpath = pdfpath = NULL;
