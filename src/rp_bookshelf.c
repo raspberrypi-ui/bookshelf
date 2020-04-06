@@ -736,6 +736,27 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
     pdf_selected ();
 }
 
+static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data)
+{
+    GtkTreeIter fitem;
+
+    if (event->button == 3)
+    {
+        GtkTreePath *path = gtk_icon_view_get_path_at_pos (GTK_ICON_VIEW (user_data), event->x, event->y);
+        if (path)
+        {
+            GtkTreeModel *model = gtk_icon_view_get_model (GTK_ICON_VIEW (user_data));
+            if (model)
+            {
+                gtk_tree_model_get_iter (model, &fitem, path);
+                gtk_tree_model_filter_convert_iter_to_child_iter (model, &selitem, &fitem);
+            }
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void close_prog (GtkButton* btn, gpointer ptr)
 {
     gtk_main_quit ();
@@ -807,7 +828,9 @@ int main (int argc, char *argv[])
     gtk_icon_view_set_model (GTK_ICON_VIEW (books_iv), books);
 
     g_signal_connect (mags_iv, "item-activated", G_CALLBACK (item_selected), mags);
+    g_signal_connect (mags_iv, "button-press-event", G_CALLBACK (icon_clicked), mags_iv);
     g_signal_connect (books_iv, "item-activated", G_CALLBACK (item_selected), books);
+    g_signal_connect (books_iv, "button-press-event", G_CALLBACK (icon_clicked), books_iv);
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
 
