@@ -54,7 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*----------------------------------------------------------------------------*/
 
 #define COVER_SIZE      128
-#define TITLE_LENGTH    24
+#define CELL_WIDTH      150
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
@@ -631,13 +631,6 @@ static int read_data_file (char *path)
                             if (access (lpath, F_OK) != -1) downloaded = TRUE;
                             g_free (lpath);
                         }
-                        if (strlen (title) > TITLE_LENGTH)
-                        {
-                            title[TITLE_LENGTH - 3] = '.';
-                            title[TITLE_LENGTH - 2] = '.';
-                            title[TITLE_LENGTH - 1] = '.';
-                            title[TITLE_LENGTH] = 0;
-                        }
                         gtk_list_store_append (items, &entry);
                         gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
                             ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
@@ -933,14 +926,25 @@ int main (int argc, char *argv[])
     items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF); 
 
     // create filtered lists and set up icon views
+    GtkCellLayout *layout;
+    GtkCellRenderer *renderer;
     for (i = 0; i < NUM_CATS; i++)
     {
         filtered[i] = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
         gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filtered[i]), (GtkTreeModelFilterVisibleFunc) match_category, (gpointer) i, NULL);
-        gtk_icon_view_set_pixbuf_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_COVER);
-        gtk_icon_view_set_markup_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_TITLE);
         gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_DESC);
-        gtk_icon_view_set_column_spacing (GTK_ICON_VIEW (item_ivs[i]), 50);
+        layout = GTK_CELL_LAYOUT (item_ivs[i]);
+
+        renderer = gtk_cell_renderer_pixbuf_new ();
+        gtk_cell_renderer_set_fixed_size (renderer, CELL_WIDTH, -1);
+        gtk_cell_layout_pack_start (layout, renderer, FALSE);
+        gtk_cell_layout_add_attribute (layout, renderer, "pixbuf", ITEM_COVER);
+
+        renderer = gtk_cell_renderer_text_new ();
+        g_object_set (renderer, "wrap-width", CELL_WIDTH, "wrap-mode", PANGO_WRAP_WORD, "alignment", PANGO_ALIGN_CENTER, NULL);
+        gtk_cell_layout_pack_start (layout, renderer, FALSE);
+        gtk_cell_layout_add_attribute (layout, renderer, "markup", ITEM_TITLE);
+
         gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), filtered[i]);
         g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (item_selected), filtered[i]);
         g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (icon_clicked), item_ivs[i]);
