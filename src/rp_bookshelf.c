@@ -167,6 +167,9 @@ static gboolean cancel_clicked (GtkButton *button, gpointer data);
 static void message (char *msg, gboolean wait);
 static void hide_message (void);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
+static void handle_menu_open (GtkWidget *widget, gpointer user_data);
+static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data);
+static void create_cs_menu (GdkEvent *event);
 static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
 static void refresh_icons (void);
 static void close_prog (GtkButton* btn, gpointer ptr);
@@ -779,6 +782,74 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
     pdf_selected ();
 }
 
+static void handle_menu_open (GtkWidget *widget, gpointer user_data)
+{
+    pdf_selected ();
+}
+
+static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data)
+{
+    gchar *cpath, *ppath, *clpath, *plpath;
+    GdkPixbuf *cover;
+    int w, h;
+
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &ppath, -1);
+    plpath = get_local_path (ppath, PDF_PATH);
+    clpath = get_local_path (cpath, CACHE_PATH);
+
+    remove (plpath);
+
+    cover = get_cover (clpath);
+    w = gdk_pixbuf_get_width (cover);
+    h = gdk_pixbuf_get_height (cover);
+    gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
+    gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+
+    gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 0, -1);
+    refresh_icons ();
+
+    g_free (plpath);
+    g_free (clpath);
+    g_free (ppath);
+    g_free (cpath);
+    g_object_unref (cover);
+}
+
+static void create_cs_menu (GdkEvent *event)
+{
+    gchar *ppath, *plpath;
+    GtkWidget *menu, *mi;
+    int dl;
+
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, ITEM_DOWNLOADED, &dl, -1);
+    plpath = get_local_path (ppath, PDF_PATH);
+
+    menu = gtk_menu_new ();
+
+    if (access (plpath, F_OK) == -1)
+    {
+        mi = gtk_menu_item_new_with_label (_("Download & open item"));
+        g_signal_connect (mi, "activate", G_CALLBACK (handle_menu_open), NULL);
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi);
+    }
+    else
+    {
+        mi = gtk_menu_item_new_with_label (_("Open item"));
+        g_signal_connect (mi, "activate", G_CALLBACK (handle_menu_open), NULL);
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi);
+
+        mi = gtk_menu_item_new_with_label (_("Delete item"));
+        g_signal_connect (mi, "activate", G_CALLBACK (handle_menu_delete_file), plpath);
+        gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi);
+    }
+
+    g_free (plpath);
+    g_free (ppath);
+
+    gtk_widget_show_all (menu);
+    gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 3, gdk_event_get_time (event));
+}
+
 static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data)
 {
     GtkTreeIter fitem;
@@ -793,6 +864,7 @@ static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer us
             {
                 gtk_tree_model_get_iter (model, &fitem, path);
                 gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (model), &selitem, &fitem);
+                create_cs_menu ((GdkEvent *) event);
             }
         }
         return TRUE;
