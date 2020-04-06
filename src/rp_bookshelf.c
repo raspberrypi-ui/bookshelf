@@ -391,7 +391,7 @@ static void update_cover_entry (char *lpath, int dl, gboolean new)
     {
         w = gdk_pixbuf_get_width (cover);
         h = gdk_pixbuf_get_height (cover);
-        gdk_pixbuf_composite (newcorn, cover, w - 32, 0, 32, 32, w - 32, 0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+        gdk_pixbuf_composite (newcorn, cover, w - 32, 0, 32, 32, w - 32, 0, 0.25, 0.25, GDK_INTERP_BILINEAR, 255);
     }
     gtk_list_store_set (items, &covitem, ITEM_COVER, cover, -1);
     g_object_unref (cover);

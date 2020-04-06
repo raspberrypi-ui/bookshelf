@@ -4,6 +4,7 @@ ui_in_files = rp_bookshelf.ui \
 				nocover.png \
 				cloud.png \
 				grey.png \
+				new.png \
 				cat.xml
 	
 ui_DATA = $(ui_in_files)
