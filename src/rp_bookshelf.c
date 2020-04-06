@@ -60,6 +60,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
 
+#define MIN_SPACE       10000000.0
+
 /* Columns in item list store */
 
 #define ITEM_CATEGORY       0
@@ -82,6 +84,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Termination function arguments */
 
 typedef enum {
+    NOSPACE = -2,
     CANCELLED = -1,
     FAILURE = 0,
     SUCCESS = 1
@@ -138,11 +141,13 @@ gboolean cover_dl, pdf_dl_req;
 static char *get_local_path (char *path, const char *dir);
 static void create_dir (char *dir);
 static void copy_file (char *src, char *dst);
+static unsigned long int get_val (char *cmd);
+static double free_space (void);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
 static gboolean curl_poll (gpointer data);
 static void finish_curl_download (tf_status success);
 static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
-static void abort_curl_download (void);
+static void abort_curl_download (gboolean by_user);
 static GdkPixbuf *get_cover (const char *filename);
 static void update_cover_entry (char *lpath, int dl);
 static gboolean find_cover_for_item (gpointer data);
@@ -203,6 +208,43 @@ static void copy_file (char *src, char *dst)
     cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
     system (cmd);
     g_free (cmd);
+}
+
+/* get_val - call a system command and convert the first string returned to a number */
+
+static unsigned long int get_val (char *cmd)
+{
+    FILE *fp;
+    char buf[64];
+    unsigned long res;
+
+    fp = popen (cmd, "r");
+    if (fp == NULL) return 0;
+    if (fgets (buf, sizeof (buf) - 1, fp) == NULL)
+    {
+        pclose (fp);
+        return 0;
+    }
+    else
+    {
+        pclose (fp);
+        if (sscanf (buf, "%ld", &res) != 1) return 0;
+        return res;
+    }
+}
+
+/* free_space - find free space on filesystem */
+
+static double free_space (void)
+{
+    char *cmd;
+    unsigned long fs;
+    double ffs = 1024.0;
+    cmd = g_strdup_printf ("df --output=avail %s%s | grep -v Avail", g_get_home_dir (), PDF_PATH);
+    fs = get_val (cmd);
+    g_free (cmd);
+    ffs *= fs;
+    return ffs;
 }
 
 
@@ -276,7 +318,15 @@ static int progress_func (GtkWidget *bar, double t, double d, double ultotal, do
     double prog = d / t;
     if (prog >= 0.0 && prog <= 1.0)
     {
-        have_bytes = TRUE;
+        if (!have_bytes)
+        {
+            if (t + MIN_SPACE >= free_space ())
+            {
+                abort_curl_download (FALSE);
+                return 0;
+            }
+            have_bytes = TRUE;
+        }
         if (msg_pb)
         {
             if (pdf_dl_req) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
@@ -286,7 +336,7 @@ static int progress_func (GtkWidget *bar, double t, double d, double ultotal, do
     return 0;
 }
 
-static void abort_curl_download (void)
+static void abort_curl_download (gboolean by_user)
 {
     g_source_remove (curl_timer);
     hide_message ();
@@ -302,7 +352,8 @@ static void abort_curl_download (void)
     g_free (fname);
     g_free (tmpname);
 
-    term_fn (CANCELLED);
+    if (by_user) term_fn (CANCELLED);
+    else term_fn (NOSPACE);
 }
 
 
@@ -486,6 +537,7 @@ static void pdf_download_done (tf_status success)
         g_object_unref (cover);
     }
     else if (success == CANCELLED) message (_("Download cancelled"), TRUE);
+    else if (success == NOSPACE) message (_("Disk full - unable to download file"), TRUE);
     else message (_("Unable to download file"), TRUE);
 
     if (cover_dl) g_idle_add (find_cover_for_item, NULL);
@@ -537,6 +589,7 @@ static void load_catalogue (tf_status success)
         return;
     }
     if (success == CANCELLED) message (_("Download cancelled"), TRUE);
+    else if (success == NOSPACE) message (_("Disk full - unable to download updates"), TRUE);
     else message (_("Unable to download updates"), TRUE);
     if (read_data_file (cbpath)) return;
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
@@ -659,7 +712,7 @@ static gboolean ok_clicked (GtkButton *button, gpointer data)
 
 static gboolean cancel_clicked (GtkButton *button, gpointer data)
 {
-    abort_curl_download ();
+    abort_curl_download (TRUE);
     return FALSE;
 }
 
