@@ -673,12 +673,12 @@ static int read_data_file (char *path)
                             if (access (lpath, F_OK) != -1) downloaded = TRUE;
                             g_free (lpath);
                         }
-                        if (strlen (title) > TITLE_LENGTH)
+                        if (strlen (dhtitle) > TITLE_LENGTH)
                         {
-                            title[TITLE_LENGTH - 3] = '.';
-                            title[TITLE_LENGTH - 2] = '.';
-                            title[TITLE_LENGTH - 1] = '.';
-                            title[TITLE_LENGTH] = 0;
+                            dhtitle[TITLE_LENGTH - 3] = '.';
+                            dhtitle[TITLE_LENGTH - 2] = '.';
+                            dhtitle[TITLE_LENGTH - 1] = '.';
+                            dhtitle[TITLE_LENGTH] = 0;
                         }
                         gtk_list_store_append (items, &entry);
                         gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, dhtitle,
