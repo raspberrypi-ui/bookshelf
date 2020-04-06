@@ -878,7 +878,7 @@ int main (int argc, char *argv[])
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
 
-    gtk_window_set_default_size (GTK_WINDOW (main_dlg), 700, 400);
+    gtk_window_set_default_size (GTK_WINDOW (main_dlg), 1000, 600);
     gtk_widget_show_all (main_dlg);
     msg_dlg = NULL;
     msg_pb = NULL;
