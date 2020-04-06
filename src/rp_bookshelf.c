@@ -179,8 +179,11 @@ static void close_prog (GtkButton* btn, gpointer ptr);
 
 static char *get_local_path (char *path, const char *dir)
 {
-    gchar *basename = g_path_get_basename (path);
-    gchar *rpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), dir, basename);
+    gchar *basename, *rpath;
+    basename = g_path_get_basename (path);
+    rpath = strchr (basename, '?');
+    if (rpath) *rpath = 0;
+    rpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), dir, basename);
     g_free (basename);
     return rpath;
 }
