@@ -1,0 +1,89 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: rp_bookshelf 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-04-06 21:24+0100\n"
+"PO-Revision-Date: 2020-04-06 21:24+0100\n"
+"Last-Translator: Simon Long <simon@raspberrypi/com>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../src/rp_bookshelf.c:481
+msgid "Downloading - please wait..."
+msgstr "Downloading - please wait..."
+
+#: ../src/rp_bookshelf.c:537
+msgid "Unable to download file"
+msgstr "Unable to download file"
+
+#: ../src/rp_bookshelf.c:538
+msgid "Disk full - unable to download file"
+msgstr "Disk full - unable to download file"
+
+#: ../src/rp_bookshelf.c:572
+msgid "Reading list of publications - please wait..."
+msgstr "Reading list of publications - please wait..."
+
+#: ../src/rp_bookshelf.c:588
+msgid "Disk full - unable to download updates"
+msgstr "Disk full - unable to download updates"
+
+#: ../src/rp_bookshelf.c:589
+msgid "Unable to download updates"
+msgstr "Unable to download updates"
+
+#: ../src/rp_bookshelf.c:828
+msgid "Download & open item"
+msgstr "Download & open item"
+
+#: ../src/rp_bookshelf.c:834
+msgid "Open item"
+msgstr "Open item"
+
+#: ../src/rp_bookshelf.c:838
+msgid "Delete item"
+msgstr "Delete item"
+
+#: ../data/rp_bookshelf.ui.h:1
+msgid "_Cancel"
+msgstr "_Cancel"
+
+#: ../data/rp_bookshelf.ui.h:2
+msgid "_OK"
+msgstr "_OK"
+
+#: ../data/rp_bookshelf.ui.h:3 ../data/rp-bookshelf.desktop.in.h:1
+msgid "Bookshelf"
+msgstr "Bookshelf"
+
+#: ../data/rp_bookshelf.ui.h:4
+msgid "The _MagPi"
+msgstr "The _MagPi"
+
+#: ../data/rp_bookshelf.ui.h:5
+msgid "_Books"
+msgstr "_Books"
+
+#: ../data/rp_bookshelf.ui.h:6
+msgid "_HackSpace"
+msgstr "_HackSpace"
+
+#: ../data/rp_bookshelf.ui.h:7
+msgid "_Wireframe"
+msgstr "_Wireframe"
+
+#: ../data/rp_bookshelf.ui.h:8
+msgid "_Close"
+msgstr "_Close"
+
+#: ../data/rp-bookshelf.desktop.in.h:2
+msgid "Download and read Raspberry Pi Press publications"
+msgstr "Download and read Raspberry Pi Press publications"

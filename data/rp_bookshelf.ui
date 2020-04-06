@@ -160,7 +160,8 @@
                   <object class="GtkLabel" id="label_magpi">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">The MagPi</property>
+                    <property name="label" translatable="yes">The _MagPi</property>
+                    <property name="use_underline">True</property>
                   </object>
                   <packing>
                     <property name="position">0</property>
@@ -188,7 +189,8 @@
                   <object class="GtkLabel" id="label_books">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Books</property>
+                    <property name="label" translatable="yes">_Books</property>
+                    <property name="use_underline">True</property>
                   </object>
                   <packing>
                     <property name="position">1</property>
@@ -216,7 +218,8 @@
                   <object class="GtkLabel" id="label_hack">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">HackSpace</property>
+                    <property name="label" translatable="yes">_HackSpace</property>
+                    <property name="use_underline">True</property>
                   </object>
                   <packing>
                     <property name="position">2</property>
@@ -244,7 +247,8 @@
                   <object class="GtkLabel" id="label_wire">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Wireframe</property>
+                    <property name="label" translatable="yes">_Wireframe</property>
+                    <property name="use_underline">True</property>
                   </object>
                   <packing>
                     <property name="position">3</property>
