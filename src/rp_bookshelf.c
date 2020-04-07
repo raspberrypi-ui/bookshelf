@@ -385,13 +385,13 @@ static void update_cover_entry (char *lpath, int dl, gboolean new)
         w = gdk_pixbuf_get_width (cover);
         h = gdk_pixbuf_get_height (cover);
         gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-        gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+        gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
     }
     if (new)
     {
         w = gdk_pixbuf_get_width (cover);
         h = gdk_pixbuf_get_height (cover);
-        gdk_pixbuf_composite (newcorn, cover, w - 32, 0, 32, 32, w - 32, 0, 0.25, 0.25, GDK_INTERP_BILINEAR, 255);
+        gdk_pixbuf_composite (newcorn, cover, w - 32, 0, 32, 32, w - 32, 0, 1, 1, GDK_INTERP_BILINEAR, 255);
     }
     gtk_list_store_set (items, &covitem, ITEM_COVER, cover, -1);
     g_object_unref (cover);
@@ -800,7 +800,7 @@ static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data)
     w = gdk_pixbuf_get_width (cover);
     h = gdk_pixbuf_get_height (cover);
     gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-    gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+    gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
 
     gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, 0, -1);
     refresh_icons ();
@@ -892,9 +892,9 @@ int main (int argc, char *argv[])
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
-    bindtextdomain ( GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR );
-    bind_textdomain_codeset ( GETTEXT_PACKAGE, "UTF-8" );
-    textdomain ( GETTEXT_PACKAGE );
+    bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+    textdomain (GETTEXT_PACKAGE);
 #endif
 
     // check that directories exist
@@ -910,13 +910,13 @@ int main (int argc, char *argv[])
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
-    cloud = get_cover (PACKAGE_DATA_DIR "/cloud.png");
-    grey = get_cover (PACKAGE_DATA_DIR "/grey.png");
-    newcorn = get_cover (PACKAGE_DATA_DIR "/new.png");
-    nocover = get_cover (PACKAGE_DATA_DIR "/nocover.png");
-    nodl = get_cover (PACKAGE_DATA_DIR "/nocover.png");
+    cloud = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/cloud.png", NULL);
+    grey = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/grey.png", NULL);
+    newcorn = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/new.png", NULL);
+    nocover = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
+    nodl = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
     i = gdk_pixbuf_get_width (nodl);
-    gdk_pixbuf_composite (cloud, nodl, (i - 64) / 2, 32, 64, 64, (i - 64) / 2, 32.0, 0.5, 0.5, GDK_INTERP_BILINEAR, 255);
+    gdk_pixbuf_composite (cloud, nodl, (i - 64) / 2, 32, 64, 64, (i - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
 
     // build the UI
     builder = gtk_builder_new ();
