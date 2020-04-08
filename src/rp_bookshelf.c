@@ -498,7 +498,8 @@ static void open_pdf (char *path)
     if (fork () == 0)
     {
         dup2 (open ("/dev/null", O_WRONLY), STDERR_FILENO); // redirect stderr...
-        execl ("/usr/bin/qpdfview", "qpdfview", "--unique", "--quiet", path, NULL);
+        dup2 (open ("/dev/null", O_WRONLY), STDOUT_FILENO); // redirect stdout...
+        execl ("/usr/bin/chromium-browser", "chromium-browser", path, NULL);
     }
 }
 
