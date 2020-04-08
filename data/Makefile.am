@@ -1,3 +1,5 @@
+SUBDIRS = icons
+
 uidir = $(datadir)/rp-bookshelf
 
 ui_in_files = rp_bookshelf.ui \
