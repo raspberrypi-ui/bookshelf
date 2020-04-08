@@ -497,8 +497,6 @@ static void open_pdf (char *path)
     g_timeout_add  (5000, reset_cursor, NULL);
     if (fork () == 0)
     {
-        dup2 (open ("/dev/null", O_WRONLY), STDERR_FILENO); // redirect stderr...
-        dup2 (open ("/dev/null", O_WRONLY), STDOUT_FILENO); // redirect stdout...
         execl ("/usr/bin/xdg-open", "xdg-open", path, NULL);
     }
 }
@@ -904,6 +902,9 @@ int main (int argc, char *argv[])
     create_dir (PDF_PATH);
 
     curl_global_init (CURL_GLOBAL_ALL);
+
+    // terminate zombies automatically
+    signal (SIGCHLD, SIG_IGN);
 
     // GTK setup
     gdk_threads_init ();
