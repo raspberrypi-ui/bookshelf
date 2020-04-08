@@ -499,7 +499,7 @@ static void open_pdf (char *path)
     {
         dup2 (open ("/dev/null", O_WRONLY), STDERR_FILENO); // redirect stderr...
         dup2 (open ("/dev/null", O_WRONLY), STDOUT_FILENO); // redirect stdout...
-        execl ("/usr/bin/chromium-browser", "chromium-browser", path, NULL);
+        execl ("/usr/bin/xdg-open", "xdg-open", path, NULL);
     }
 }
 
