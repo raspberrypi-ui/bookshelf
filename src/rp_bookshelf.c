@@ -487,7 +487,7 @@ static void pdf_selected (void)
     g_free (ppath);
 }
 
-/* open_pdf - launches qpdfview with supplied file */
+/* open_pdf - launches default viewer with supplied file */
 
 static void open_pdf (char *path)
 {
