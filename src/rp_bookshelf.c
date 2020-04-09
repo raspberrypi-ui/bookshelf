@@ -494,6 +494,7 @@ static void open_pdf (char *path)
     if (fork () == 0)
     {
         execl ("/usr/bin/xdg-open", "xdg-open", path, NULL);
+        exit (0);
     }
 }
 
