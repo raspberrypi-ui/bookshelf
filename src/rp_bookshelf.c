@@ -154,7 +154,6 @@ static gboolean find_cover_for_item (gpointer data);
 static void image_download_done (tf_status success);
 static void pdf_selected (void);
 static void open_pdf (char *path);
-static gboolean reset_cursor (gpointer data);
 static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
 static gboolean get_catalogue (gpointer data);
@@ -492,21 +491,10 @@ static void pdf_selected (void)
 
 static void open_pdf (char *path)
 {
-    GdkCursor *busy = gdk_cursor_new_from_name (gdk_display_get_default (), "left_ptr_watch");
-    gdk_window_set_cursor (gtk_widget_get_window (main_dlg), busy);
-    g_timeout_add  (5000, reset_cursor, NULL);
     if (fork () == 0)
     {
         execl ("/usr/bin/xdg-open", "xdg-open", path, NULL);
     }
-}
-
-/* reset_cursor - the PDF viewer doesn't show busy, so bodge it... */
-
-static gboolean reset_cursor (gpointer data)
-{
-    gdk_window_set_cursor (gtk_widget_get_window (main_dlg), NULL);
-    return FALSE;
 }
 
 /* pdf_download_done - called on completed curl PDF download */
