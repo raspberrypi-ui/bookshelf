@@ -828,8 +828,8 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
 static void book_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
 {
     GtkTreeIter fitem, sitem;
-    gtk_tree_model_get_iter (GTK_TREE_MODEL (user_data), &sitem, path);
-    gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (user_data), &fitem, &sitem);
+    gtk_tree_model_get_iter (GTK_TREE_MODEL (sorted), &sitem, path);
+    gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (sorted), &fitem, &sitem);
     gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (filtered[CAT_BOOKS]), &selitem, &fitem);
 
     pdf_selected ();
@@ -934,14 +934,10 @@ static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpoint
         GtkTreePath *path = gtk_icon_view_get_path_at_pos (GTK_ICON_VIEW (user_data), event->x, event->y);
         if (path)
         {
-            GtkTreeModel *model = gtk_icon_view_get_model (GTK_ICON_VIEW (user_data));
-            if (model)
-            {
-                gtk_tree_model_get_iter (model, &sitem, path);
-                gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (model), &fitem, &sitem);
-                gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (filtered[CAT_BOOKS]), &selitem, &fitem);
-                create_cs_menu ((GdkEvent *) event);
-            }
+            gtk_tree_model_get_iter (sorted, &sitem, path);
+            gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (sorted), &fitem, &sitem);
+            gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (filtered[CAT_BOOKS]), &selitem, &fitem);
+            create_cs_menu ((GdkEvent *) event);
         }
         return TRUE;
     }
@@ -1043,7 +1039,7 @@ int main (int argc, char *argv[])
         if (i == CAT_BOOKS)
         {
             gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), sorted);
-            g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (book_selected), sorted);
+            g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (book_selected), NULL);
             g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (book_icon_clicked), item_ivs[i]);
         }
         else
