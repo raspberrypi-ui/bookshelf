@@ -111,6 +111,7 @@ GtkListStore *items;
 /* Filtered versions of the above */
 
 GtkTreeModel *filtered[NUM_CATS];
+GtkTreeModel *sorted;
 
 /* Download items */
 
@@ -156,6 +157,7 @@ static void pdf_selected (void);
 static void open_pdf (char *path);
 static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
+static void remap_title (char **title);
 static gboolean get_catalogue (gpointer data);
 static void load_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char **dest);
@@ -166,10 +168,12 @@ static gboolean cancel_clicked (GtkButton *button, gpointer data);
 static void message (char *msg, gboolean wait);
 static void hide_message (void);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
+static void book_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void handle_menu_open (GtkWidget *widget, gpointer user_data);
 static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data);
 static void create_cs_menu (GdkEvent *event);
 static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
+static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
 static void refresh_icons (void);
 static void close_prog (GtkButton* btn, gpointer ptr);
 
@@ -550,6 +554,58 @@ static void get_pending_pdf (void)
 /* Catalogue management                                                       */
 /*----------------------------------------------------------------------------*/
 
+#define N_REMAPS 32
+
+const char *titlemap[N_REMAPS][2] = {
+    "Build Your Own First-Person Shooter in Unity",     "Build your own First-Person Shooter",
+    "Book of Making Volume 2",                          "HackSpace Book of Making Volume 2",
+    "Code the Classics – Volume 1",                     "Code the Classics Volume 1",
+    "Get Started with Arduino",                         "Get Started with Arduino",
+    "Projects Book 5",                                  "Projects Book 5",
+    "Retro Gaming with Raspberry Pi",                   "Retro Gaming",
+    "Get Started with Raspberry Pi",                    "Get Started with Raspberry Pi",
+    "Raspberry Pi Beginner's Guide v3",                 "Beginner's Guide",
+    "Beginner's Guide v2",                              NULL,
+    "Wearable Tech Projects",                           "Wearable Tech Projects",
+    "C &amp; GUI Programming",                          "C &amp; GUI Programming",
+    "Command Line 2",                                   "Essentials - Conquer the Command Line",
+    "Book of Scratch",                                  "Code Club Book of Scratch",
+    "Beginner's Guide",                                 NULL,
+    "Book of Making Volume 1",                          "HackSpace Book of Making Volume 1",
+    "Projects Book 4",                                  "Projects Book 4",
+    "Annual 2018",                                      "Raspberry Pi Annual 2018",
+    "Beginner's Book 1",                                "Beginner's Book",
+    "Projects Book 3",                                  "Projects Book 3",
+    "AIY Voice Essentials",                             "Essentials - AIY Voice",
+    "Camera Essentials",                                "Essentials - Camera",
+    "Projects Book 2",                                  "Projects Book 2",
+    "Learn C Essentials",                               "Essentials - Learn to Code in C",
+    "GPIO Zero Essentials",                             "Essentials - GPIO Zero",
+    "Minecraft Essentials",                             "Essentials - Hacking Minecraft",
+    "Scratch Essentials",                               "Essentials - Learn to Code in Scratch",
+    "Sonic Pi Essentials",                              "Essentials - Sonic Pi",
+    "Sense HAT Essentials",                             "Essentials - Sense HAT",
+    "Make Games",                                       "Essentials - Python Games",
+    "Projects Book",                                    "Projects Book",
+    "Command Line",                                     NULL,
+    "MagPi SE 1",                                       NULL
+};
+
+static void remap_title (char **title)
+{
+    int i;
+
+    for (i = 0; i < N_REMAPS; i++)
+    {
+        if (!g_strcmp0 (*title, titlemap[i][0]))
+        {
+            g_free (*title);
+            *title = g_strdup (titlemap[i][1]);
+            return;
+        }
+    }
+}
+
 /* get_catalogue - start a catalogue download */
 
 static gboolean get_catalogue (gpointer data)
@@ -615,6 +671,8 @@ static int read_data_file (char *path)
             {
                 if (strstr (linebuf, "</ITEM>"))
                 {
+                    if (category == CAT_BOOKS) remap_title (&title);
+
                     // item end flag - add the entry
                     if (title && desc && covpath && pdfpath)
                     {
@@ -767,6 +825,16 @@ static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer us
     pdf_selected ();
 }
 
+static void book_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
+{
+    GtkTreeIter fitem, sitem;
+    gtk_tree_model_get_iter (GTK_TREE_MODEL (user_data), &sitem, path);
+    gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (user_data), &fitem, &sitem);
+    gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (filtered[CAT_BOOKS]), &selitem, &fitem);
+
+    pdf_selected ();
+}
+
 static void handle_menu_open (GtkWidget *widget, gpointer user_data)
 {
     pdf_selected ();
@@ -857,6 +925,29 @@ static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer us
     return FALSE;
 }
 
+static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data)
+{
+    GtkTreeIter fitem, sitem;
+
+    if (event->button == 3)
+    {
+        GtkTreePath *path = gtk_icon_view_get_path_at_pos (GTK_ICON_VIEW (user_data), event->x, event->y);
+        if (path)
+        {
+            GtkTreeModel *model = gtk_icon_view_get_model (GTK_ICON_VIEW (user_data));
+            if (model)
+            {
+                gtk_tree_model_get_iter (model, &sitem, path);
+                gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (model), &fitem, &sitem);
+                gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (filtered[CAT_BOOKS]), &selitem, &fitem);
+                create_cs_menu ((GdkEvent *) event);
+            }
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void refresh_icons (void)
 {
     int i;
@@ -930,6 +1021,12 @@ int main (int argc, char *argv[])
     {
         filtered[i] = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
         gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filtered[i]), (GtkTreeModelFilterVisibleFunc) match_category, (gpointer) i, NULL);
+        if (i == CAT_BOOKS)
+        {
+            sorted = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL (filtered[i]));
+            gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sorted), ITEM_TITLE, GTK_SORT_ASCENDING);
+        }
+
         gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_DESC);
         layout = GTK_CELL_LAYOUT (item_ivs[i]);
 
@@ -943,9 +1040,18 @@ int main (int argc, char *argv[])
         gtk_cell_layout_pack_start (layout, renderer, FALSE);
         gtk_cell_layout_add_attribute (layout, renderer, "markup", ITEM_TITLE);
 
-        gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), filtered[i]);
-        g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (item_selected), filtered[i]);
-        g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (icon_clicked), item_ivs[i]);
+        if (i == CAT_BOOKS)
+        {
+            gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), sorted);
+            g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (book_selected), sorted);
+            g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (book_icon_clicked), item_ivs[i]);
+        }
+        else
+        {
+            gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), filtered[i]);
+            g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (item_selected), filtered[i]);
+            g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (icon_clicked), item_ivs[i]);
+        }
     }
 
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
