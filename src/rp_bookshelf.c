@@ -557,13 +557,13 @@ static void get_pending_pdf (void)
 #define N_REMAPS 32
 
 const char *titlemap[N_REMAPS][2] = {
-    "Build Your Own First-Person Shooter in Unity",     "Build your own First-Person Shooter",
+    "Build Your Own First-Person Shooter in Unity",     "Build a First-Person Shooter",
     "Book of Making Volume 2",                          "HackSpace Book of Making Volume 2",
     "Code the Classics – Volume 1",                     "Code the Classics Volume 1",
     "Get Started with Arduino",                         "Get Started with Arduino",
     "Projects Book 5",                                  "Raspberry Pi Projects Book 5",
     "Retro Gaming with Raspberry Pi",                   "Retro Gaming with Raspberry Pi",
-    "Get Started with Raspberry Pi",                    "Get Started with Raspberry Pi",
+    "Get Started with Raspberry Pi",                    NULL,
     "Raspberry Pi Beginner's Guide v3",                 "Raspberry Pi Beginner's Guide",
     "Beginner's Guide v2",                              NULL,
     "Wearable Tech Projects",                           "Wearable Tech Projects",
@@ -574,7 +574,7 @@ const char *titlemap[N_REMAPS][2] = {
     "Book of Making Volume 1",                          "HackSpace Book of Making Volume 1",
     "Projects Book 4",                                  "Raspberry Pi Projects Book 4",
     "Annual 2018",                                      "Raspberry Pi Annual 2018",
-    "Beginner's Book 1",                                "Raspberry Pi Beginner's Book",
+    "Beginner's Book 1",                                NULL,
     "Projects Book 3",                                  "Raspberry Pi Projects Book 3",
     "AIY Voice Essentials",                             "Essentials - AIY Voice Projects",
     "Camera Essentials",                                "Essentials - Camera Module Guide",
@@ -586,7 +586,7 @@ const char *titlemap[N_REMAPS][2] = {
     "Sonic Pi Essentials",                              "Essentials - Code Music with Sonic Pi",
     "Sense HAT Essentials",                             "Essentials - Sense HAT Experiments",
     "Make Games",                                       "Essentials - Make Games with Python",
-    "Projects Book",                                    "Raspberry Pi Projects Book",
+    "Projects Book",                                    "Raspberry Pi Projects Book 1",
     "Command Line",                                     NULL,
     "MagPi SE 1",                                       NULL
 };
