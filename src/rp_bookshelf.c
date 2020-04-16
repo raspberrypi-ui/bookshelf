@@ -65,6 +65,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
 
+#define USER_AGENT      "Raspberry Pi Bookshelf/0.1"
+
 #define MIN_SPACE       10000000.0
 
 /* Columns in item list store */
@@ -286,6 +288,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     }
 
     curl_easy_setopt (http_handle, CURLOPT_URL, url);
+    curl_easy_setopt (http_handle, CURLOPT_USERAGENT, USER_AGENT);
     curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
     curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt (http_handle, CURLOPT_PROGRESSFUNCTION, progress_func);
