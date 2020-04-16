@@ -180,6 +180,7 @@ static void create_cs_menu (GdkEvent *event);
 static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
 static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
 static void refresh_icons (void);
+static void web_link (GtkButton* btn, gpointer ptr);
 static void close_prog (GtkButton* btn, gpointer ptr);
 
 /*----------------------------------------------------------------------------*/
