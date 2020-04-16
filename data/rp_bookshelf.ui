@@ -282,7 +282,7 @@
                 <child>
                   <object class="GtkButton" id="button_web">
                     <property name="label" translatable="yes">_Website...</property>
-                    <property name="tooltip_text" translatable="yes">Visit the MagPi website to see other titles and to purchase print copies and subscriptions</property>
+                    <property name="tooltip_text" translatable="yes">Visit the Raspberry Pi Press website to see other titles and to purchase print copies and subscriptions</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>

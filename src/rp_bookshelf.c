@@ -56,7 +56,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COVER_SIZE      128
 #define CELL_WIDTH      150
 
-#define WEBSITE_URL     "https://magpi.raspberrypi.org/"
+#define MAGPI_URL       "https://magpi.raspberrypi.org/"
+#define BOOKS_URL       "https://magpi.raspberrypi.org/books"
+#define HACKSPACE_URL   "https://hackspace.raspberrypi.org/"
+#define WIREFRAME_URL   "https://wireframe.raspberrypi.org/"
+
 #define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
@@ -97,7 +101,7 @@ typedef enum {
 
 /* Controls */
 
-static GtkWidget *main_dlg, *close_btn, *web_btn;
+static GtkWidget *main_dlg, *close_btn, *web_btn, *items_nb;
 static GtkWidget *item_ivs[NUM_CATS];
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
@@ -955,8 +959,17 @@ static void web_link (GtkButton* btn, gpointer ptr)
 {
     if (fork () == 0)
     {
-        execl ("/usr/bin/xdg-open", "xdg-open", WEBSITE_URL, NULL);
-        exit (0);
+        switch (gtk_notebook_get_current_page (GTK_NOTEBOOK (items_nb)))
+        {
+            case 0 :    execl ("/usr/bin/xdg-open", "xdg-open", MAGPI_URL, NULL);
+                        exit (0);
+            case 1 :    execl ("/usr/bin/xdg-open", "xdg-open", BOOKS_URL, NULL);
+                        exit (0);
+            case 2 :    execl ("/usr/bin/xdg-open", "xdg-open", HACKSPACE_URL, NULL);
+                        exit (0);
+            case 3 :    execl ("/usr/bin/xdg-open", "xdg-open", WIREFRAME_URL, NULL);
+                        exit (0);
+        }
     }
 }
 
@@ -1017,6 +1030,7 @@ int main (int argc, char *argv[])
     item_ivs[CAT_WFRAME] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_wire");
     close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
     web_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_web");
+    items_nb = (GtkWidget *) gtk_builder_get_object (builder, "notebook1");
 
     // create list store
     items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF); 
