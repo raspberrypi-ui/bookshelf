@@ -56,6 +56,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COVER_SIZE      128
 #define CELL_WIDTH      150
 
+#define WEBSITE_URL     "https://magpi.raspberrypi.org/"
 #define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/MagPi/"
@@ -96,7 +97,7 @@ typedef enum {
 
 /* Controls */
 
-static GtkWidget *main_dlg, *close_btn;
+static GtkWidget *main_dlg, *close_btn, *web_btn;
 static GtkWidget *item_ivs[NUM_CATS];
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
@@ -950,6 +951,15 @@ static void refresh_icons (void)
     for (i = 0; i < NUM_CATS; i++) gtk_widget_queue_draw (item_ivs[i]);
 }
 
+static void web_link (GtkButton* btn, gpointer ptr)
+{
+    if (fork () == 0)
+    {
+        execl ("/usr/bin/xdg-open", "xdg-open", WEBSITE_URL, NULL);
+        exit (0);
+    }
+}
+
 static void close_prog (GtkButton* btn, gpointer ptr)
 {
     gtk_main_quit ();
@@ -1006,6 +1016,7 @@ int main (int argc, char *argv[])
     item_ivs[CAT_HSPACE] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_hack");
     item_ivs[CAT_WFRAME] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_wire");
     close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
+    web_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_web");
 
     // create list store
     items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF); 
@@ -1050,6 +1061,7 @@ int main (int argc, char *argv[])
         }
     }
 
+    g_signal_connect (web_btn, "clicked", G_CALLBACK (web_link), NULL);
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
 
