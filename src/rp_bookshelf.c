@@ -63,7 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
-#define PDF_PATH        "/MagPi/"
+#define PDF_PATH        "/Bookshelf/"
 
 #define USER_AGENT      "Raspberry Pi Bookshelf/0.1"
 
@@ -990,6 +990,8 @@ static void close_prog (GtkButton* btn, gpointer ptr)
 int main (int argc, char *argv[])
 {
     GtkBuilder *builder;
+    GtkCellLayout *layout;
+    GtkCellRenderer *renderer;
     int i;
 
 #ifdef ENABLE_NLS
@@ -1040,8 +1042,6 @@ int main (int argc, char *argv[])
     items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF); 
 
     // create filtered lists and set up icon views
-    GtkCellLayout *layout;
-    GtkCellRenderer *renderer;
     for (i = 0; i < NUM_CATS; i++)
     {
         filtered[i] = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
