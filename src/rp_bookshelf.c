@@ -375,8 +375,9 @@ static GdkPixbuf *get_cover (const char *filename)
     pb = gdk_pixbuf_new_from_file (filename, NULL);
     if (!pb) pb = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
 
-    w = gdk_pixbuf_get_width (pb);
     h = gdk_pixbuf_get_height (pb);
+    if (h == COVER_SIZE) return pb;
+    w = gdk_pixbuf_get_width (pb);
 
     spb = gdk_pixbuf_scale_simple (pb, ((w > h) ? COVER_SIZE : COVER_SIZE * w / h), 
         ((w > h) ? COVER_SIZE * h / w : COVER_SIZE), GDK_INTERP_BILINEAR);
