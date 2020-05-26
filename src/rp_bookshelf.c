@@ -56,10 +56,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COVER_SIZE      128
 #define CELL_WIDTH      150
 
-#define MAGPI_URL       "https://magpi.raspberrypi.org/"
-#define BOOKS_URL       "https://magpi.raspberrypi.org/books"
-#define HACKSPACE_URL   "https://hackspace.raspberrypi.org/"
-#define WIREFRAME_URL   "https://wireframe.raspberrypi.org/"
+#define MAGPI_URL       "https://store.rpipress.cc/collections/the-magpi-essentials"
+#define BOOKS_URL       "https://store.rpipress.cc/collections/latest-bookazines"
+#define HACKSPACE_URL   "https://store.rpipress.cc/collections/hackspace-magazine"
+#define WIREFRAME_URL   "https://store.rpipress.cc/collections/wireframe"
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
