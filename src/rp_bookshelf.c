@@ -257,7 +257,7 @@ static double free_space (void)
     char *cmd;
     unsigned long fs;
     double ffs = 1024.0;
-    cmd = g_strdup_printf ("df --output=avail %s%s | grep -v Avail", g_get_home_dir (), PDF_PATH);
+    cmd = g_strdup_printf ("df --output=avail %s%s | tail -n 1", g_get_home_dir (), PDF_PATH);
     fs = get_val (cmd);
     g_free (cmd);
     ffs *= fs;
