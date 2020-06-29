@@ -149,7 +149,6 @@ gboolean cover_dl, pdf_dl_req;
 
 static char *get_local_path (char *path, const char *dir);
 static void create_dir (char *dir);
-static void copy_file (char *src, char *dst);
 static unsigned long int get_val (char *cmd);
 static double free_space (void);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
@@ -214,17 +213,6 @@ static void create_dir (char *dir)
     if (!dp) mkdir (path, 0755);
     else closedir (dp);
     g_free (path);
-}
-
-/* copy_file - system file copy */
-
-static void copy_file (char *src, char *dst)
-{
-    gchar *cmd;
-
-    cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
-    system (cmd);
-    g_free (cmd);
 }
 
 /* get_val - call a system command and convert the first string returned to a number */
@@ -636,7 +624,9 @@ static void load_catalogue (tf_status success)
 
     if (success == SUCCESS && read_data_file (catpath))
     {
-        copy_file (catpath, cbpath);
+        gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
+        system (cmd);
+        g_free (cmd);
         return;
     }
     if (success == NOSPACE) message (_("Disk full - unable to download updates"), TRUE);
