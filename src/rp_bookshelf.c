@@ -259,6 +259,7 @@ static double free_space (void)
 
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success))
 {
+    int still_running;
     cancelled = FALSE;
     downstat = FAILURE;
     term_fn = end_fn;
@@ -282,14 +283,25 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     curl_easy_setopt (http_handle, CURLOPT_PROGRESSFUNCTION, progress_func);
 
     curl_multi_add_handle (multi_handle, http_handle);
-
-    curl_timer = g_timeout_add (100, curl_poll, NULL);
+    if (curl_multi_perform (multi_handle, &still_running) == CURLM_OK && still_running)
+        curl_timer = g_idle_add (curl_poll, NULL);
+    else
+    {
+        downstat = FAILURE;
+        finish_curl_download ();
+    }
 }
 
 static gboolean curl_poll (gpointer data)
 {
-    int still_running;
-    if (curl_multi_perform (multi_handle, &still_running) != CURLE_OK)
+    int still_running, numfds;
+    if (curl_multi_wait (multi_handle, NULL, 0, 1000, &numfds) != CURLM_OK)
+    {
+        downstat = FAILURE;
+        finish_curl_download ();
+        return FALSE;
+    }
+    if (curl_multi_perform (multi_handle, &still_running) != CURLM_OK)
     {
         downstat = FAILURE;
         finish_curl_download ();
