@@ -295,7 +295,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
 static gboolean curl_poll (gpointer data)
 {
     int still_running, numfds;
-    if (curl_multi_wait (multi_handle, NULL, 0, 1000, &numfds) != CURLM_OK)
+    if (curl_multi_wait (multi_handle, NULL, 0, 200, &numfds) != CURLM_OK)
     {
         downstat = FAILURE;
         finish_curl_download ();
