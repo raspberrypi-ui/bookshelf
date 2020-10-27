@@ -150,6 +150,7 @@ gboolean cover_dl, pdf_dl_req;
 static char *get_local_path (char *path, const char *dir);
 static void create_dir (char *dir);
 static unsigned long int get_val (char *cmd);
+static char *get_string (char *cmd);
 static double free_space (void);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
 static gboolean curl_poll (gpointer data);
@@ -166,7 +167,7 @@ static void get_pending_pdf (void);
 static void remap_title (char **title);
 static gboolean get_catalogue (gpointer data);
 static void load_catalogue (tf_status success);
-static void get_param (char *linebuf, char *name, char **dest);
+static void get_param (char *linebuf, char *name, char *lang, char **dest);
 static int read_data_file (char *path);
 static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
@@ -236,6 +237,30 @@ static unsigned long int get_val (char *cmd)
         if (sscanf (buf, "%ld", &res) != 1) return 0;
         return res;
     }
+}
+
+/* get_val - call a system command and return the first string in the output */
+
+static char *get_string (char *cmd)
+{
+    char *line = NULL, *res = NULL;
+    size_t len = 0;
+    FILE *fp = popen (cmd, "r");
+
+    if (fp == NULL) return NULL;
+    if (getline (&line, &len, fp) > 0)
+    {
+        res = line;
+        while (*res)
+        {
+            if (g_ascii_isspace (*res)) *res = 0;
+            res++;
+        }
+        res = g_strdup (line);
+    }
+    pclose (fp);
+    g_free (line);
+    return res;
 }
 
 /* free_space - find free space on filesystem */
@@ -649,13 +674,16 @@ static void load_catalogue (tf_status success)
 
 /* get_param - helper function to look for tag in line */
 
-static void get_param (char *linebuf, char *name, char **dest)
+static void get_param (char *linebuf, char *name, char *lang, char **dest)
 {
-    char *p1, *p2;
+    char *p1, *p2, *search;
+
+    if (lang) search = g_strdup_printf ("<%s LANG=\"%s\">", name, lang);
+    else search = g_strdup_printf ("<%s>", name);
     
-    if (p1 = strstr (linebuf, name))
+    if (p1 = strstr (linebuf, search))
     {
-        p1 += strlen (name);
+        p1 += strlen (search);
         p2 = strchr (p1, '<');
         if (p2)
         {
@@ -663,13 +691,14 @@ static void get_param (char *linebuf, char *name, char **dest)
             *dest = g_strdup (p1);
         }
     }
+    g_free (search);
 }
 
 /* read_data_file - main file parser routine */
 
 static int read_data_file (char *path)
 {
-    char *linebuf = NULL, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL;
+    char *linebuf = NULL, *lang, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL, *tr_title = NULL, *tr_desc = NULL, *tr_covpath = NULL, *tr_pdfpath = NULL;
     size_t nchars = 0;
     GtkTreeIter entry;
     int category = -1, in_item = FALSE, downloaded, count = 0;
@@ -677,6 +706,8 @@ static int read_data_file (char *path)
     FILE *fp = fopen (path, "rb");
     if (fp)
     {
+        lang = get_string ("grep LANG= /etc/default/locale | cut -d= -f2 | cut -d_ -f1");
+
         while (getline (&linebuf, &nchars, fp) != -1)
         {
             if (in_item)
@@ -688,6 +719,26 @@ static int read_data_file (char *path)
                     // item end flag - add the entry
                     if (title && desc && covpath && pdfpath)
                     {
+                        if (tr_title)
+                        {
+                            g_free (title);
+                            title = tr_title;
+                        }
+                        if (tr_desc)
+                        {
+                            g_free (desc);
+                            desc = tr_desc;
+                        }
+                        if (tr_covpath)
+                        {
+                            g_free (covpath);
+                            covpath = tr_covpath;
+                        }
+                        if (tr_pdfpath)
+                        {
+                            g_free (pdfpath);
+                            pdfpath = tr_pdfpath;
+                        }
                         downloaded = FALSE;
                         if (pdfpath)
                         {
@@ -706,12 +757,17 @@ static int read_data_file (char *path)
                     g_free (covpath);
                     g_free (pdfpath);
                     title = desc = covpath = pdfpath = NULL;
+                    tr_title = tr_desc = tr_covpath = tr_pdfpath = NULL;
                     count++;
                 }
-                get_param (linebuf, "<TITLE>", &title);
-                get_param (linebuf, "<DESC>", &desc);
-                get_param (linebuf, "<COVER>", &covpath);
-                get_param (linebuf, "<PDF>", &pdfpath);
+                get_param (linebuf, "TITLE", NULL, &title);
+                get_param (linebuf, "DESC", NULL, &desc);
+                get_param (linebuf, "COVER", NULL, &covpath);
+                get_param (linebuf, "PDF", NULL, &pdfpath);
+                get_param (linebuf, "TITLE", lang, &tr_title);
+                get_param (linebuf, "DESC", lang, &tr_desc);
+                get_param (linebuf, "COVER", lang, &tr_covpath);
+                get_param (linebuf, "PDF", lang, &tr_pdfpath);
             }   
             else
             {
@@ -722,8 +778,11 @@ static int read_data_file (char *path)
                 if (strstr (linebuf, "<ITEM>")) in_item = TRUE;
             }
         }
+
         fclose (fp);
-    } else return 0;
+        g_free (lang);
+    }
+    else return 0;
 
     if (!count) return count;
 
