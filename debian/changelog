@@ -1,3 +1,9 @@
+rp-bookshelf (0.6) buster; urgency=medium
+
+  * Add handling for translated documents based on system language
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 27 Oct 2020 16:38:32 +0000
+
 rp-bookshelf (0.5) buster; urgency=medium
 
   * Improve download speed for cover artwork
