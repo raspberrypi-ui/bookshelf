@@ -1,3 +1,9 @@
+rp-bookshelf (0.7) buster; urgency=medium
+
+  * Added Slovak translation
+
+ -- Simon Long <simon@raspberrypi.com>  Sun, 03 Jan 2021 21:55:10 +0000
+
 rp-bookshelf (0.6) buster; urgency=medium
 
   * Add handling for translated documents based on system language
