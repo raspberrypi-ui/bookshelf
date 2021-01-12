@@ -25,7 +25,7 @@ LT_PREREQ([2.2])
 LT_INIT
 
 # Checks for libraries.
-pkg_modules="$pkg_modules gtk+-2.0 >= 2.18.0 libcurl"
+pkg_modules="$pkg_modules gtk+-3.0 libcurl"
 
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 AC_SUBST(PACKAGE_CFLAGS)

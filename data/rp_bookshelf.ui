@@ -3,6 +3,7 @@
   <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkWindow" id="msg">
+    <property name="name">pixbox</property>
     <property name="can_focus">False</property>
     <property name="modal">True</property>
     <property name="window_position">center-on-parent</property>
@@ -24,7 +25,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <object class="GtkVBox" id="msgvbox">
+                  <object class="GtkBox" id="msgvbox">
+                    <property name="orientation">vertical</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
@@ -43,7 +45,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="msghbox1">
+                      <object class="GtkBox" id="msghbox1">
+                        <property name="orientation">horizontal</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
@@ -65,7 +68,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="msghbox2">
+                      <object class="GtkBox" id="msghbox2">
+                        <property name="orientation">horizontal</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
@@ -125,12 +129,14 @@
     <property name="icon_name">bookshelf</property>
     <property name="type_hint">dialog</property>
     <child>
-      <object class="GtkVBox" id="vbox1">
+      <object class="GtkBox" id="vbox1">
+        <property name="orientation">vertical</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">10</property>
         <child>
-          <object class="GtkHBox" id="hbox1">
+          <object class="GtkBox" id="hbox1">
+            <property name="orientation">horizontal</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">10</property>
@@ -138,7 +144,6 @@
               <object class="GtkNotebook" id="notebook1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="homogeneous">True</property>
                 <child>
                   <object class="GtkScrolledWindow" id="scrolledwindow_magpi">
                     <property name="visible">True</property>
@@ -270,7 +275,8 @@
           </packing>
         </child>
         <child>
-          <object class="GtkHBox" id="hbox2">
+          <object class="GtkBox" id="hbox2">
+            <property name="orientation">horizontal</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
@@ -325,5 +331,13 @@
         </child>
       </object>
     </child>
+  </object>
+    <object class="GtkSizeGroup">
+    <widgets>
+      <widget name="label_magpi"/>
+      <widget name="label_books"/>
+      <widget name="label_hack"/>
+      <widget name="label_wire"/>
+    </widgets>
   </object>
 </interface>

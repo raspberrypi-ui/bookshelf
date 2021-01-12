@@ -827,11 +827,8 @@ static void message (char *msg, gboolean wait)
     if (!msg_dlg)
     {
         GtkBuilder *builder;
-        GtkWidget *wid;
-        GdkColor col;
 
-        builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/rp_bookshelf.ui", NULL);
+        builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/rp_bookshelf.ui");
 
         msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "msg");
         gtk_window_set_modal (GTK_WINDOW (msg_dlg), TRUE);
@@ -839,10 +836,6 @@ static void message (char *msg, gboolean wait)
         gtk_window_set_position (GTK_WINDOW (msg_dlg), GTK_WIN_POS_CENTER_ON_PARENT);
         gtk_window_set_destroy_with_parent (GTK_WINDOW (msg_dlg), TRUE);
         gtk_window_set_default_size (GTK_WINDOW (msg_dlg), 340, 100);
-
-        wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_eb");
-        gdk_color_parse ("#FFFFFF", &col);
-        gtk_widget_modify_bg (wid, GTK_STATE_NORMAL, &col);
 
         msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
         msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "msg_pb");
@@ -971,7 +964,7 @@ static void create_cs_menu (GdkEvent *event)
     g_free (ppath);
 
     gtk_widget_show_all (menu);
-    gtk_menu_popup (GTK_MENU (menu), NULL, NULL, NULL, NULL, 3, gdk_event_get_time (event));
+    gtk_menu_popup_at_pointer (GTK_MENU (menu), event);
 }
 
 static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data)
@@ -1074,8 +1067,6 @@ int main (int argc, char *argv[])
     signal (SIGCHLD, SIG_IGN);
 
     // GTK setup
-    gdk_threads_init ();
-    gdk_threads_enter ();
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
@@ -1088,8 +1079,7 @@ int main (int argc, char *argv[])
     gdk_pixbuf_composite (cloud, nodl, (i - 64) / 2, 32, 64, 64, (i - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
 
     // build the UI
-    builder = gtk_builder_new ();
-    gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/rp_bookshelf.ui", NULL);
+    builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/rp_bookshelf.ui");
 
     main_dlg = (GtkWidget *) gtk_builder_get_object (builder, "main_window");
     item_ivs[CAT_MAGPI] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_magpi");
@@ -1123,6 +1113,7 @@ int main (int argc, char *argv[])
         gtk_cell_layout_add_attribute (layout, renderer, "pixbuf", ITEM_COVER);
 
         renderer = gtk_cell_renderer_text_new ();
+        gtk_cell_renderer_set_alignment (renderer, 0.5, 0.0);
         g_object_set (renderer, "wrap-width", CELL_WIDTH, "wrap-mode", PANGO_WRAP_WORD, "alignment", PANGO_ALIGN_CENTER, NULL);
         gtk_cell_layout_pack_start (layout, renderer, FALSE);
         gtk_cell_layout_add_attribute (layout, renderer, "markup", ITEM_TITLE);
@@ -1159,7 +1150,6 @@ int main (int argc, char *argv[])
 
     g_object_unref (builder);
     gtk_widget_destroy (main_dlg);
-    gdk_threads_leave ();
     return 0;
 }
 
