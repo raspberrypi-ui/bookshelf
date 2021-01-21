@@ -831,10 +831,7 @@ static void message (char *msg, gboolean wait)
         builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/rp_bookshelf.ui");
 
         msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "msg");
-        gtk_window_set_modal (GTK_WINDOW (msg_dlg), TRUE);
         gtk_window_set_transient_for (GTK_WINDOW (msg_dlg), GTK_WINDOW (main_dlg));
-        gtk_window_set_position (GTK_WINDOW (msg_dlg), GTK_WIN_POS_CENTER_ON_PARENT);
-        gtk_window_set_destroy_with_parent (GTK_WINDOW (msg_dlg), TRUE);
         gtk_window_set_default_size (GTK_WINDOW (msg_dlg), 340, 100);
 
         msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
