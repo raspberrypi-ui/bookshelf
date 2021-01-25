@@ -830,18 +830,16 @@ static void message (char *msg, gboolean wait)
 
         builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/rp_bookshelf.ui");
 
-        msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "msg");
+        msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
         gtk_window_set_transient_for (GTK_WINDOW (msg_dlg), GTK_WINDOW (main_dlg));
-        gtk_window_set_default_size (GTK_WINDOW (msg_dlg), 340, 100);
 
-        msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
-        msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "msg_pb");
-        msg_ok = (GtkWidget *) gtk_builder_get_object (builder, "msg_btn");
-        msg_cancel = (GtkWidget *) gtk_builder_get_object (builder, "msg_cancel");
+        msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
+        msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
+        msg_ok = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
+        msg_cancel = (GtkWidget *) gtk_builder_get_object (builder, "modal_cancel");
 
         gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
-        gtk_widget_show_all (msg_dlg);
         g_object_unref (builder);
     }
     else gtk_label_set_text (GTK_LABEL (msg_msg), msg);
@@ -861,6 +859,8 @@ static void message (char *msg, gboolean wait)
         gtk_widget_set_visible (msg_pb, TRUE);
         gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), 0.0);
     }
+
+    gtk_widget_show (msg_dlg);
 }
 
 static void hide_message (void)
@@ -1133,7 +1133,6 @@ int main (int argc, char *argv[])
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
 
-    gtk_window_set_default_size (GTK_WINDOW (main_dlg), 1000, 600);
     gtk_widget_show_all (main_dlg);
     msg_dlg = NULL;
     msg_pb = NULL;
