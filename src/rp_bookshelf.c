@@ -847,16 +847,16 @@ static void message (char *msg, gboolean wait)
     if (wait)
     {
         g_signal_connect (msg_ok, "clicked", G_CALLBACK (ok_clicked), NULL);
-        gtk_widget_set_visible (msg_cancel, FALSE);
-        gtk_widget_set_visible (msg_ok, TRUE);
-        gtk_widget_set_visible (msg_pb, FALSE);
+        gtk_widget_hide (msg_cancel);
+        gtk_widget_show (msg_ok);
+        gtk_widget_hide (msg_pb);
     }
     else
     {
         g_signal_connect (msg_cancel, "clicked", G_CALLBACK (cancel_clicked), NULL);
-        gtk_widget_set_visible (msg_cancel, TRUE);
-        gtk_widget_set_visible (msg_ok, FALSE);
-        gtk_widget_set_visible (msg_pb, TRUE);
+        gtk_widget_show (msg_cancel);
+        gtk_widget_hide (msg_ok);
+        gtk_widget_show (msg_pb);
         gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), 0.0);
     }
 
