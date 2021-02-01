@@ -1,0 +1,114 @@
+# Italian translations for bookshelf package.
+# Copyright (C) 2019 Raspberry Pi Ltd
+# This file is distributed under the same license as the bookshelf package.
+# Emanuele Goldoni <emanuele.goldoni@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-01-28 09:23+0100\n"
+"PO-Revision-Date: 2021-01-28 09:41+0100\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.1\n"
+"Last-Translator: Emanuele Goldoni <emanuele.goldoni@gmail.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: it\n"
+
+#: ../src/rp_bookshelf.c:519
+msgid "Downloading - please wait..."
+msgstr "Scaricamento: attendere..."
+
+#: ../src/rp_bookshelf.c:564
+msgid "Unable to download file"
+msgstr "Impossibile scaricare il file"
+
+#: ../src/rp_bookshelf.c:565
+msgid "Disk full - unable to download file"
+msgstr "Disco pieno: impossibile scaricare il file"
+
+#: ../src/rp_bookshelf.c:651
+msgid "Reading list of publications - please wait..."
+msgstr "Lettura dell'elenco delle pubblicazioni: attendere..."
+
+#: ../src/rp_bookshelf.c:669
+msgid "Disk full - unable to download updates"
+msgstr "Disco pieno: impossibile scaricare gli aggiornamenti"
+
+#: ../src/rp_bookshelf.c:670
+msgid "Unable to download updates"
+msgstr "Impossibile scaricare gli aggiornamenti"
+
+#: ../src/rp_bookshelf.c:945
+msgid "Download & open item"
+msgstr "Scarica e apri elemento"
+
+#: ../src/rp_bookshelf.c:951
+msgid "Open item"
+msgstr "Apri elemento"
+
+#: ../src/rp_bookshelf.c:955
+msgid "Delete item"
+msgstr "Cancella elemento"
+
+# Traduzione libera ma più efficace di 'scaffale di libri' e meno ambiguia di 'libreria'
+#. End of file
+#. ----------------------------------------------------------------------------
+#: ../data/rp_bookshelf.ui.h:1 ../data/rp-bookshelf.desktop.in.h:1
+msgid "Bookshelf"
+msgstr "Biblioteca"
+
+#: ../data/rp_bookshelf.ui.h:2
+msgid "The _MagPi"
+msgstr "The _MagPi"
+
+#: ../data/rp_bookshelf.ui.h:3
+msgid "_Books"
+msgstr "_Libri"
+
+#: ../data/rp_bookshelf.ui.h:4
+msgid "_HackSpace"
+msgstr "_HackSpace"
+
+#: ../data/rp_bookshelf.ui.h:5
+msgid "_Wireframe"
+msgstr "_Wireframe"
+
+#: ../data/rp_bookshelf.ui.h:6
+msgid "_Website..."
+msgstr "_Sito Web..."
+
+#: ../data/rp_bookshelf.ui.h:7
+msgid ""
+"Visit the Raspberry Pi Press website to see other titles and to purchase "
+"print copies and subscriptions"
+msgstr ""
+"Visita il sito di Raspberry Pi Press per vedere altri titoli e per "
+"acquistare copie stampate e abbonamenti"
+
+#: ../data/rp_bookshelf.ui.h:8
+msgid "_Close"
+msgstr "_Chiudi"
+
+#: ../data/rp_bookshelf.ui.h:9
+msgid "Close the bookshelf application"
+msgstr "Chiudi l'applicazione Biblioteca"
+
+#: ../data/rp_bookshelf.ui.h:10
+msgid "label"
+msgstr "etichetta"
+
+#: ../data/rp_bookshelf.ui.h:11
+msgid "_Cancel"
+msgstr "_Annulla"
+
+#: ../data/rp_bookshelf.ui.h:12
+msgid "_OK"
+msgstr "_OK"
+
+#: ../data/rp-bookshelf.desktop.in.h:2
+msgid "Download and read Raspberry Pi Press publications"
+msgstr "Scarica e leggi le pubblicazioni di Raspberry Pi Press"
