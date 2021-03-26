@@ -1,3 +1,9 @@
+rp-bookshelf (0.8) buster; urgency=medium
+
+  * GTK+3 version
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 26 Mar 2021 14:07:09 +0000
+
 rp-bookshelf (0.7) buster; urgency=medium
 
   * Added Slovak translation
