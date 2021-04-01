@@ -1,3 +1,9 @@
+rp-bookshelf (0.9) buster; urgency=medium
+
+  * Remove hiding of app in other desktops
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 01 Apr 2021 20:40:45 +0100
+
 rp-bookshelf (0.8) buster; urgency=medium
 
   * GTK+3 version

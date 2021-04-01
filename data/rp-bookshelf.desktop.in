@@ -5,6 +5,5 @@ _GenericName=Bookshelf
 _Comment=Download and read Raspberry Pi Press publications
 Icon=bookshelf
 Exec=rp-bookshelf
-NotShowIn=GNOME;XFCE;
 StartupNotify=true
 Categories=Help;
