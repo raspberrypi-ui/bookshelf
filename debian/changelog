@@ -1,3 +1,9 @@
+rp-bookshelf (0.10) bullseye; urgency=medium
+
+  * Added Armenian translation
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 26 Apr 2021 09:00:29 +0100
+
 rp-bookshelf (0.9) buster; urgency=medium
 
   * Remove hiding of app in other desktops
