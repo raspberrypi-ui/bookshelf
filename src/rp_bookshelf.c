@@ -60,6 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BOOKS_URL       "https://store.rpipress.cc/collections/latest-bookazines"
 #define HACKSPACE_URL   "https://store.rpipress.cc/collections/hackspace-magazine"
 #define WIREFRAME_URL   "https://store.rpipress.cc/collections/wireframe"
+#define CUSTOMPC_URL    "https://store.rpipress.cc/collections/custom-pc-magazine"
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
@@ -86,7 +87,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CAT_BOOKS           1
 #define CAT_HSPACE          2
 #define CAT_WFRAME          3
-#define NUM_CATS            4
+#define CAT_CUSTPC          4
+#define NUM_CATS            5
 
 /* Termination function arguments */
 
@@ -701,7 +703,9 @@ static int read_data_file (char *path)
     char *linebuf = NULL, *lang, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL, *tr_title = NULL, *tr_desc = NULL, *tr_covpath = NULL, *tr_pdfpath = NULL;
     size_t nchars = 0;
     GtkTreeIter entry;
-    int category = -1, in_item = FALSE, downloaded, count = 0;
+    int i, category = -1, in_item = FALSE, downloaded, counts[NUM_CATS], count = 0;
+
+    for (i = 0; i < NUM_CATS; i++) counts[i] = 0;
 
     FILE *fp = fopen (path, "rb");
     if (fp)
@@ -758,6 +762,7 @@ static int read_data_file (char *path)
                     g_free (pdfpath);
                     title = desc = covpath = pdfpath = NULL;
                     tr_title = tr_desc = tr_covpath = tr_pdfpath = NULL;
+                    counts[category]++;
                     count++;
                 }
                 get_param (linebuf, "TITLE", NULL, &title);
@@ -775,6 +780,7 @@ static int read_data_file (char *path)
                 if (strstr (linebuf, "<BOOKS>")) category = CAT_BOOKS;
                 if (strstr (linebuf, "<HACKSPACE>")) category = CAT_HSPACE;
                 if (strstr (linebuf, "<WIREFRAME>")) category = CAT_WFRAME;
+                if (strstr (linebuf, "<CUSTOMPC>")) category = CAT_CUSTPC;
                 if (strstr (linebuf, "<ITEM>")) in_item = TRUE;
             }
         }
@@ -784,6 +790,11 @@ static int read_data_file (char *path)
     }
     else return 0;
 
+    // hide any tab with no entries
+    for (i = 0; i < NUM_CATS; i++)
+    {
+        if (!counts[i]) gtk_widget_hide (gtk_notebook_get_nth_page (GTK_NOTEBOOK (items_nb), i));
+    }
     if (!count) return count;
 
     // start loading covers
@@ -1025,6 +1036,8 @@ static void web_link (GtkButton* btn, gpointer ptr)
                         exit (0);
             case 3 :    execl ("/usr/bin/xdg-open", "xdg-open", WIREFRAME_URL, NULL);
                         exit (0);
+            case 4 :    execl ("/usr/bin/xdg-open", "xdg-open", CUSTOMPC_URL, NULL);
+                        exit (0);
         }
     }
 }
@@ -1083,6 +1096,7 @@ int main (int argc, char *argv[])
     item_ivs[CAT_BOOKS] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_books");
     item_ivs[CAT_HSPACE] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_hack");
     item_ivs[CAT_WFRAME] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_wire");
+    item_ivs[CAT_CUSTPC] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_custpc");
     close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
     web_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_web");
     items_nb = (GtkWidget *) gtk_builder_get_object (builder, "notebook1");
