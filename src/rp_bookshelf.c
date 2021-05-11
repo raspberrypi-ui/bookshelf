@@ -144,6 +144,7 @@ tf_status downstat;
 /* Flags to manage simultaneous download of art and PDF */
 
 gboolean cover_dl, pdf_dl_req;
+gulong draw_id;
 
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
@@ -167,7 +168,6 @@ static void open_pdf (char *path);
 static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
 static void remap_title (char **title);
-static gboolean get_catalogue (gpointer data);
 static void load_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char *lang, char **dest);
 static int read_data_file (char *path);
@@ -186,6 +186,7 @@ static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpoint
 static void refresh_icons (void);
 static void web_link (GtkButton* btn, gpointer ptr);
 static void close_prog (GtkButton* btn, gpointer ptr);
+static gboolean first_draw (GtkWidget *instance);
 
 /*----------------------------------------------------------------------------*/
 /* Helpers                                                                    */
@@ -643,19 +644,7 @@ static void remap_title (char **title)
     }
 }
 
-/* get_catalogue - start a catalogue download */
-
-static gboolean get_catalogue (gpointer data)
-{
-    catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
-    cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
-
-    message (_("Reading list of publications - please wait..."), FALSE);
-    start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
-    return FALSE;
-}
-
-/* get_catalogue - open a catalogue file - either main, backup or fallback */
+/* load_catalogue - open a catalogue file - either main, backup or fallback */
 
 static void load_catalogue (tf_status success)
 {
@@ -1047,6 +1036,22 @@ static void close_prog (GtkButton* btn, gpointer ptr)
     gtk_main_quit ();
 }
 
+/* There's a potential race condition with some WMs whereby trying to draw
+ * a modal dialog before the main dialog has realized, the modal dialog`
+ * cannot centre on the main dialog - this function ensures that modals will
+ * not be drawn until the main dialog has realized. */
+
+static gboolean first_draw (GtkWidget *instance)
+{
+    catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
+    cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
+
+    message (_("Reading list of publications - please wait..."), FALSE);
+    start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
+    g_signal_handler_disconnect (instance, draw_id);
+    return FALSE;
+}
+
 
 /*----------------------------------------------------------------------------*/
 /* Main window                                                                */
@@ -1154,7 +1159,7 @@ int main (int argc, char *argv[])
     // update catalogue
     cover_dl = FALSE;
     pdf_dl_req = FALSE;
-    g_idle_add (get_catalogue, NULL);
+    draw_id = g_signal_connect (main_dlg, "draw", G_CALLBACK (first_draw), NULL);
 
     gtk_main ();
 
