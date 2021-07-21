@@ -1,3 +1,9 @@
+rp-bookshelf (0.13) bullseye; urgency=medium
+
+  * Increase curl polling timeout to 1s
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 21 Jul 2021 16:24:00 +0100
+
 rp-bookshelf (0.12) bullseye; urgency=medium
 
   * Remove dialog hint

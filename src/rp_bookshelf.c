@@ -70,6 +70,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MIN_SPACE       10000000.0
 
+#define CURL_TIMEOUT    1000
+
 /* Columns in item list store */
 
 #define ITEM_CATEGORY       0
@@ -323,7 +325,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
 static gboolean curl_poll (gpointer data)
 {
     int still_running, numfds;
-    if (curl_multi_wait (multi_handle, NULL, 0, 200, &numfds) != CURLM_OK)
+    if (curl_multi_wait (multi_handle, NULL, 0, CURL_TIMEOUT, &numfds) != CURLM_OK)
     {
         downstat = FAILURE;
         finish_curl_download ();
