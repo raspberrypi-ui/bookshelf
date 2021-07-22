@@ -1,3 +1,9 @@
+rp-bookshelf (0.14) buster; urgency=medium
+
+  * Rebuild for buster to fix dependency issue - no code changes
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 22 Jul 2021 06:33:05 +0100
+
 rp-bookshelf (0.13) bullseye; urgency=medium
 
   * Increase curl polling timeout to 1s
