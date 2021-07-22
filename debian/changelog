@@ -1,3 +1,9 @@
+rp-bookshelf (0.15) bullseye; urgency=medium
+
+  * Rebuild for bullseye
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 22 Jul 2021 06:39:19 +0100
+
 rp-bookshelf (0.14) buster; urgency=medium
 
   * Rebuild for buster to fix dependency issue - no code changes
