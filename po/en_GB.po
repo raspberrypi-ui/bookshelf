@@ -8,13 +8,14 @@ msgstr ""
 "Project-Id-Version: rp_bookshelf 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-04-16 08:34+0100\n"
-"PO-Revision-Date: 2020-04-06 21:24+0100\n"
-"Last-Translator: Simon Long <simon@raspberrypi/com>\n"
+"PO-Revision-Date: 2021-09-08 17:33+0900\n"
+"Last-Translator: Lee Yunseok <ironyunseok@protonmail.com>\n"
 "Language-Team: English (British)\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.1\n"
 
 #: ../src/rp_bookshelf.c:485
 msgid "Downloading - please wait..."
@@ -83,10 +84,14 @@ msgid "_Wireframe"
 msgstr "_Wireframe"
 
 #: ../data/rp_bookshelf.ui.h:8
-msgid "_Website..."
-msgstr ""
+msgid "_Custom PC"
+msgstr "_Custom PC"
 
 #: ../data/rp_bookshelf.ui.h:9
+msgid "_Website..."
+msgstr "_Website..."
+
+#: ../data/rp_bookshelf.ui.h:10
 msgid ""
 "Visit the Raspberry Pi Press website to see other titles and to purchase print copies and "
 "subscriptions"
@@ -94,11 +99,11 @@ msgstr ""
 "Visit the Raspberry Pi Press website to see other titles and to purchase print copies and "
 "subscriptions"
 
-#: ../data/rp_bookshelf.ui.h:10
+#: ../data/rp_bookshelf.ui.h:11
 msgid "_Close"
 msgstr "_Close"
 
-#: ../data/rp_bookshelf.ui.h:11
+#: ../data/rp_bookshelf.ui.h:12
 msgid "Close the bookshelf application"
 msgstr "Close the bookshelf application"
 
