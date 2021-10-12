@@ -62,7 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define WIREFRAME_URL   "https://store.rpipress.cc/collections/wireframe"
 #define CUSTOMPC_URL    "https://store.rpipress.cc/collections/custom-pc-magazine"
 
-#define CATALOGUE_URL   "https://magpi.raspberrypi.org/bookshelf.xml"
+#define CATALOGUE_URL   "https://magpi.raspberrypi.com/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/Bookshelf/"
 
