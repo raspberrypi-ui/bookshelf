@@ -207,6 +207,19 @@ static char *get_local_path (char *path, const char *dir)
     return rpath;
 }
 
+/* get_system_path - creates a string with path to file in package data dir */
+
+static char *get_system_path (char *path)
+{
+    gchar *basename, *rpath;
+    basename = g_path_get_basename (path);
+    rpath = strchr (basename, '?');
+    if (rpath) *rpath = 0;
+    rpath = g_strdup_printf ("%s/%s", PACKAGE_DATA_DIR, basename);
+    g_free (basename);
+    return rpath;
+}
+
 /* create dir - create a directory if it doesn't exist */
 
 static void create_dir (char *dir)
@@ -244,7 +257,7 @@ static unsigned long int get_val (char *cmd)
     }
 }
 
-/* get_val - call a system command and return the first string in the output */
+/* get_string - call a system command and return the first string in the output */
 
 static char *get_string (char *cmd)
 {
@@ -517,8 +530,18 @@ static void pdf_selected (void)
     gchar *ppath, *plpath;
 
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, -1);
-    plpath = get_local_path (ppath, PDF_PATH);
 
+    plpath = get_system_path (ppath);
+    if (access (plpath, F_OK) != -1)
+    {
+        open_pdf (plpath);
+        g_free (plpath);
+        g_free (ppath);
+        return;
+    }
+    g_free (plpath);
+
+    plpath = get_local_path (ppath, PDF_PATH);
     if (access (plpath, F_OK) == -1)
     {
         message (_("Downloading - please wait..."), FALSE);
@@ -737,7 +760,11 @@ static int read_data_file (char *path)
                         downloaded = FALSE;
                         if (pdfpath)
                         {
-                            gchar *lpath = get_local_path (pdfpath, PDF_PATH);
+                            char *lpath;
+                            lpath = get_system_path (pdfpath);
+                            if (access (lpath, F_OK) != -1) downloaded = TRUE;
+                            g_free (lpath);
+                            lpath = get_local_path (pdfpath, PDF_PATH);
                             if (access (lpath, F_OK) != -1) downloaded = TRUE;
                             g_free (lpath);
                         }
