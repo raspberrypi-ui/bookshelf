@@ -1,0 +1,117 @@
+# pt_BR rp-bookshelf Translation.
+# Copyright (C) 2022 Kemel Zaidan
+# This file is distributed under the same license as the rp-bookshelf package.
+# Kemel Zaidan <kemelzaidan@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: kemelzaidan@gmail.com\n"
+"POT-Creation-Date: 2022-10-14 05:04-0300\n"
+"PO-Revision-Date: 2022-10-14 06:27-0300\n"
+"Last-Translator: Kemel Zaidan <kemelzaidan@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <kemelzaidan@gmail.com>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 40.0\n"
+
+#: ../src/rp_bookshelf.c:547
+msgid "Downloading - please wait..."
+msgstr "Baixando - favor aguardar..."
+
+#: ../src/rp_bookshelf.c:592
+msgid "Unable to download file"
+msgstr "Incapaz de baixar o arquivo"
+
+#: ../src/rp_bookshelf.c:593
+msgid "Disk full - unable to download file"
+msgstr "Disco cheio - Incapaz de baixar o arquivo"
+
+#: ../src/rp_bookshelf.c:685
+msgid "Disk full - unable to download updates"
+msgstr "Disco cheio - incapaz de baixar atualizações"
+
+#: ../src/rp_bookshelf.c:686
+msgid "Unable to download updates"
+msgstr "Incapaz de baixar atualizações"
+
+#: ../src/rp_bookshelf.c:974
+msgid "Download & open item"
+msgstr "Baixar & abrir item"
+
+#: ../src/rp_bookshelf.c:980
+msgid "Open item"
+msgstr "Abrir item"
+
+#: ../src/rp_bookshelf.c:984
+msgid "Delete item"
+msgstr "Apagar item"
+
+#: ../src/rp_bookshelf.c:1078
+msgid "Reading list of publications - please wait..."
+msgstr "Lendo a lista de publicações - favor aguardar..."
+
+#. End of file
+#. ----------------------------------------------------------------------------
+#: ../data/rp_bookshelf.ui.h:1 ../data/rp-bookshelf.desktop.in.h:1
+msgid "Bookshelf"
+msgstr "Bookshelf"
+
+#: ../data/rp_bookshelf.ui.h:2
+msgid "The _MagPi"
+msgstr "The _MagPi"
+
+#: ../data/rp_bookshelf.ui.h:3
+msgid "_Books"
+msgstr "_Livros"
+
+#: ../data/rp_bookshelf.ui.h:4
+msgid "_HackSpace"
+msgstr "_HackSpace"
+
+#: ../data/rp_bookshelf.ui.h:5
+msgid "_Wireframe"
+msgstr "_Wireframe"
+
+#: ../data/rp_bookshelf.ui.h:6
+msgid "_Custom PC"
+msgstr "_Custom PC"
+
+#: ../data/rp_bookshelf.ui.h:7
+msgid "_Website..."
+msgstr "_Website..."
+
+#: ../data/rp_bookshelf.ui.h:8
+msgid ""
+"Visit the Raspberry Pi Press website to see other titles and to purchase "
+"print copies and subscriptions"
+msgstr ""
+"Visite o site da Editora Raspberry Pi para ver outros títulos e comprar "
+"cópias impressas e assinaturas"
+
+#: ../data/rp_bookshelf.ui.h:9
+msgid "_Close"
+msgstr "_Fechar"
+
+#: ../data/rp_bookshelf.ui.h:10
+msgid "Close the bookshelf application"
+msgstr "Fechar a aplicação"
+
+#: ../data/rp_bookshelf.ui.h:11
+msgid "label"
+msgstr "etiqueta"
+
+#: ../data/rp_bookshelf.ui.h:12
+msgid "_Cancel"
+msgstr "_Cancelar"
+
+#: ../data/rp_bookshelf.ui.h:13
+msgid "_OK"
+msgstr "_OK"
+
+#: ../data/rp-bookshelf.desktop.in.h:2
+msgid "Download and read Raspberry Pi Press publications"
+msgstr "Baixe e leia as publicações da Editora Raspberry Pi"
