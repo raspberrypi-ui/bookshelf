@@ -1,3 +1,9 @@
+rp-bookshelf (0.19) bullseye; urgency=medium
+
+  * Add Portuguese translation
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 20 Oct 2022 13:22:19 +0100
+
 rp-bookshelf (0.18) bullseye; urgency=medium
 
   * Fix size of modal dialog
