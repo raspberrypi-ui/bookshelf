@@ -1,3 +1,9 @@
+rp-bookshelf (0.20) bullseye; urgency=medium
+
+  * Set undecorated dialogs in code
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 31 Jan 2023 09:45:49 +0000
+
 rp-bookshelf (0.19) bullseye; urgency=medium
 
   * Add Portuguese translation
