@@ -104,62 +104,6 @@
                     <property name="tab-fill">False</property>
                   </packing>
                 </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow_wire">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <child>
-                      <object class="GtkIconView" id="iconview_wire">
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="margin">0</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="position">3</property>
-                  </packing>
-                </child>
-                <child type="tab">
-                  <object class="GtkLabel" id="label_wire">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label" translatable="yes">_Wireframe</property>
-                    <property name="use-underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="position">3</property>
-                    <property name="tab-fill">False</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="scrolledwindow_custpc">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <child>
-                      <object class="GtkIconView" id="iconview_custpc">
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="margin">0</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="position">4</property>
-                  </packing>
-                </child>
-                <child type="tab">
-                  <object class="GtkLabel" id="label_custpc">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label" translatable="yes">_Custom PC</property>
-                    <property name="use-underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="position">4</property>
-                    <property name="tab-fill">False</property>
-                  </packing>
-                </child>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -235,7 +179,6 @@
       <widget name="label_magpi"/>
       <widget name="label_books"/>
       <widget name="label_hack"/>
-      <widget name="label_wire"/>
     </widgets>
   </object>
   <object class="GtkWindow" id="modal">
