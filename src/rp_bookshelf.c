@@ -884,7 +884,6 @@ static void message (char *msg, gboolean wait)
     }
 
     gtk_widget_show (msg_dlg);
-    gtk_window_set_decorated (GTK_WINDOW (msg_dlg), FALSE);
 }
 
 static void hide_message (void)
