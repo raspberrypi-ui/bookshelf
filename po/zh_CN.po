@@ -31,7 +31,7 @@ msgstr "磁盘已满——无法下载文件"
 
 #: ../src/rp_bookshelf.c:617
 msgid "Reading list of publications - please wait..."
-msgstr "正在读取出版物列表——请稍候…"
+msgstr "正在读取出版物列表——请稍候……"
 
 #: ../src/rp_bookshelf.c:633
 msgid "Disk full - unable to download updates"
@@ -85,7 +85,7 @@ msgstr "_线框图"
 
 #: ../data/rp_bookshelf.ui.h:8
 msgid "_Website..."
-msgstr "_网站..……"
+msgstr "_网站……"
 
 #: ../data/rp_bookshelf.ui.h:9
 msgid ""
