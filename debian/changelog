@@ -1,3 +1,9 @@
+rp-bookshelf (0.23) bookworm; urgency=medium
+
+  * Translation update
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 16 Jul 2024 07:48:54 +0100
+
 rp-bookshelf (0.22) bookworm; urgency=medium
 
   * Fix hiding of titlebars under Wayland
