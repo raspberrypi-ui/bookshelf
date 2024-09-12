@@ -1,3 +1,9 @@
+rp-bookshelf (0.24) bookworm; urgency=medium
+
+  * Fix shadows on undecorated windows
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 12 Sep 2024 13:46:03 +0100
+
 rp-bookshelf (0.23) bookworm; urgency=medium
 
   * Translation update
