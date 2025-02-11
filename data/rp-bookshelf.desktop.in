@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-_Name=Bookshelf
-_GenericName=Bookshelf
-_Comment=Download and read Raspberry Pi Press publications
+Name=Bookshelf
+GenericName=Bookshelf
+Comment=Download and read Raspberry Pi Press publications
 Icon=bookshelf
 Exec=rp-bookshelf
 StartupNotify=true
