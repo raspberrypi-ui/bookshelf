@@ -317,7 +317,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     curl_easy_setopt (http_handle, CURLOPT_USERAGENT, USER_AGENT);
     curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
     curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
-    curl_easy_setopt (http_handle, CURLOPT_PROGRESSFUNCTION, progress_func);
+    curl_easy_setopt (http_handle, CURLOPT_XFERINFOFUNCTION, progress_func);
 
     curl_multi_add_handle (multi_handle, http_handle);
     if (curl_multi_perform (multi_handle, &still_running) == CURLM_OK && still_running)
