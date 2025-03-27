@@ -1,3 +1,9 @@
+rp-bookshelf (0.26) bookworm; urgency=medium
+
+  * Fix progress problems with new version of curl
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 27 Mar 2025 09:41:19 +0000
+
 rp-bookshelf (0.25) bookworm; urgency=medium
 
   * Remove HackSpace tab

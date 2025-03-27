@@ -150,11 +150,11 @@ static char *get_local_path (char *path, const char *dir);
 static void create_dir (char *dir);
 static unsigned long int get_val (char *cmd);
 static char *get_string (char *cmd);
-static double free_space (void);
+static curl_off_t free_space (void);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
 static gboolean curl_poll (gpointer data);
 static void finish_curl_download (void);
-static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow);
+static int progress_func (GtkWidget *bar, curl_off_t t, curl_off_t d, curl_off_t ultotal, curl_off_t ulnow);
 static GdkPixbuf *get_cover (const char *filename);
 static void update_cover_entry (char *lpath, int dl, gboolean new);
 static gboolean find_cover_for_item (gpointer data);
@@ -277,11 +277,11 @@ static char *get_string (char *cmd)
 
 /* free_space - find free space on filesystem */
 
-static double free_space (void)
+static curl_off_t free_space (void)
 {
     char *cmd;
     unsigned long fs;
-    double ffs = 1024.0;
+    curl_off_t ffs = 1024;
     cmd = g_strdup_printf ("df --output=avail %s%s | tail -n 1", g_get_home_dir (), PDF_PATH);
     fs = get_val (cmd);
     g_free (cmd);
@@ -369,9 +369,11 @@ static void finish_curl_download (void)
     term_fn (downstat);
 }
 
-static int progress_func (GtkWidget *bar, double t, double d, double ultotal, double ulnow)
+static int progress_func (GtkWidget *bar, curl_off_t t, curl_off_t d, curl_off_t ultotal, curl_off_t ulnow)
 {
-    double prog = d / t;
+    double prog = d;
+    prog /= t;
+
     if (cancelled)
     {
         downstat = CANCELLED;
@@ -822,7 +824,7 @@ static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer
     int cat;
 
     gtk_tree_model_get (model, iter, ITEM_CATEGORY, &cat, -1);
-    return (cat == (int) data);
+    return (cat == (long) data);
 }
 
 
@@ -1076,7 +1078,7 @@ int main (int argc, char *argv[])
     GtkBuilder *builder;
     GtkCellLayout *layout;
     GtkCellRenderer *renderer;
-    int i;
+    long i;
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
