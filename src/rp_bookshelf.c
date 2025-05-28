@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #include <glib.h>
 #include <glib/gi18n.h>
@@ -62,6 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CATALOGUE_URL   "https://magpi.raspberrypi.com/bookshelf.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/Bookshelf/"
+#define GUIDE_PATH      "/usr/share/userguide/"
 
 #define USER_AGENT      "Raspberry Pi Bookshelf/0.1"
 
@@ -168,6 +170,7 @@ static void load_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char *lang, char **dest);
 static int read_data_file (char *path);
 static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
+static void symlink_user_guide (void);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
 static gboolean cancel_clicked (GtkButton *button, gpointer data);
 static void message (char *msg, gboolean wait);
@@ -827,6 +830,52 @@ static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer
     return (cat == (long) data);
 }
 
+/* symlink_user_guide - check and create / delete symlinks to files in /usr/share/userguide */
+
+static void symlink_user_guide (void)
+{
+    struct dirent *dp;
+    struct stat buf;
+    DIR *dfd;
+    char *pdpath, *spath, *dpath;
+
+    // loop through all files in PDF dir looking for old symlinks
+    pdpath = g_strdup_printf ("%s%s", g_get_home_dir (), PDF_PATH);
+    if ((dfd = opendir (pdpath)))
+    {
+        while ((dp = readdir (dfd)))
+        {
+            spath = g_strdup_printf ("%s%s", GUIDE_PATH, dp->d_name);
+            dpath = g_strdup_printf ("%s%s", pdpath, dp->d_name);
+            if (lstat (dpath, &buf) != -1 && S_ISLNK (buf.st_mode))
+            {
+                // file is a symlink - if there is no corresponding file, delete the link
+                if (stat (spath, &buf) == -1) unlink (dpath);
+            }
+            g_free (spath);
+            g_free (dpath);
+        }
+    }
+
+    // loop through all files in userguide dir creating new symlinks
+    if ((dfd = opendir (GUIDE_PATH)))
+    {
+        while ((dp = readdir (dfd)))
+        {
+            if (dp->d_name[0] == '.') continue;
+
+            spath = g_strdup_printf ("%s%s", GUIDE_PATH, dp->d_name);
+            dpath = g_strdup_printf ("%s%s", pdpath, dp->d_name);
+
+            // if file is not already present in dest, create a symlink to it
+            if (stat (dpath, &buf) == -1) symlink (spath, dpath);
+
+            g_free (spath);
+            g_free (dpath);
+        }
+    }
+    g_free (pdpath);
+}
 
 /*----------------------------------------------------------------------------*/
 /* Message box                                                                */
@@ -1091,6 +1140,9 @@ int main (int argc, char *argv[])
     create_dir ("/.cache/");
     create_dir (CACHE_PATH);
     create_dir (PDF_PATH);
+
+    // check user guide symlinks
+    symlink_user_guide ();
 
     curl_global_init (CURL_GLOBAL_ALL);
 
