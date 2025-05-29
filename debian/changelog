@@ -1,4 +1,4 @@
-rp-bookshelf (0.27) trixie; urgency=medium
+rp-bookshelf (1.0) trixie; urgency=medium
 
   * Create symlinks to user guide at startup
 
