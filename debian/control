@@ -9,6 +9,6 @@ Homepage: http://raspberrypi.com/
 
 Package: rp-bookshelf
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-3-0 (>= 3.24), libcurl4, gtk-update-icon-cache
+Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-3-0 (>= 3.24), libcurl4
 Description: Raspberry Pi publications
  Browser for Raspberry Pi Press publications in PDF format
