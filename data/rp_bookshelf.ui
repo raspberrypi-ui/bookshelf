@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.38.2 -->
+<!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkWindow" id="main_window">
     <property name="can-focus">False</property>
     <property name="border-width">10</property>
     <property name="title" translatable="yes">Bookshelf</property>
-    <property name="default-width">1000</property>
+    <property name="default-width">700</property>
     <property name="default-height">600</property>
     <property name="icon-name">bookshelf</property>
     <child>
@@ -94,46 +94,49 @@
           <object class="GtkBox" id="hbox2">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
+            <property name="spacing">10</property>
             <child>
-              <object class="GtkButtonBox" id="hbuttonbox1">
+              <object class="GtkButton" id="button_web">
+                <property name="label" translatable="yes">_Website...</property>
                 <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="spacing">5</property>
-                <child>
-                  <object class="GtkButton" id="button_web">
-                    <property name="label" translatable="yes">_Website...</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="tooltip-text" translatable="yes">Visit the Raspberry Pi Press website to see other titles and to purchase print copies and subscriptions</property>
-                    <property name="use-underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkButton" id="button_ok">
-                    <property name="label" translatable="yes">_Close</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="receives-default">True</property>
-                    <property name="tooltip-text" translatable="yes">Close the bookshelf application</property>
-                    <property name="use-underline">True</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="tooltip-text" translatable="yes">Visit the Raspberry Pi Press website to see other titles and to purchase print copies and subscriptions</property>
+                <property name="use-underline">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSearchEntry" id="srch">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="primary-icon-name">edit-find-symbolic</property>
+                <property name="primary-icon-activatable">False</property>
+                <property name="primary-icon-sensitive">False</property>
               </object>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_ok">
+                <property name="label" translatable="yes">_Close</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="tooltip-text" translatable="yes">Close the bookshelf application</property>
+                <property name="use-underline">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>
@@ -145,6 +148,12 @@
         </child>
       </object>
     </child>
+  </object>
+  <object class="GtkSizeGroup">
+    <widgets>
+      <widget name="button_web"/>
+      <widget name="button_ok"/>
+    </widgets>
   </object>
   <object class="GtkSizeGroup">
     <widgets>

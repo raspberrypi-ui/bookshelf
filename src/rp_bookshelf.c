@@ -103,7 +103,7 @@ typedef enum {
 
 /* Controls */
 
-static GtkWidget *main_dlg, *close_btn, *web_btn, *items_nb;
+static GtkWidget *main_dlg, *close_btn, *web_btn, *items_nb, *search_box;
 static GtkWidget *item_ivs[NUM_CATS];
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
@@ -825,9 +825,41 @@ static int read_data_file (char *path)
 static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data)
 {
     int cat;
+    char *title;
+    const char *srch;
 
-    gtk_tree_model_get (model, iter, ITEM_CATEGORY, &cat, -1);
-    return (cat == (long) data);
+    gtk_tree_model_get (model, iter, ITEM_CATEGORY, &cat, ITEM_TITLE, &title, -1);
+    srch = gtk_entry_get_text (GTK_ENTRY (search_box));
+    if (cat == (long) data)
+    {
+        if (!srch || strcasestr (title, srch))
+        {
+            g_free (title);
+            return TRUE;
+        }
+    }
+    g_free (title);
+    return FALSE;
+}
+
+static void search_update (GtkSearchEntry *self, gpointer data)
+{
+    int i;
+
+    for (i = 0; i < NUM_CATS; i++)
+    {
+        if (i == CAT_BOOKS)
+        {
+            gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (
+                gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (
+                gtk_icon_view_get_model (GTK_ICON_VIEW (item_ivs[i]))))));
+        }
+        else
+        {
+            gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (
+                gtk_icon_view_get_model (GTK_ICON_VIEW (item_ivs[i]))));
+        }
+    }
 }
 
 /* symlink_user_guide - check and create / delete symlinks to files in /usr/share/userguide */
@@ -1170,6 +1202,7 @@ int main (int argc, char *argv[])
     close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
     web_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_web");
     items_nb = (GtkWidget *) gtk_builder_get_object (builder, "notebook1");
+    search_box = (GtkWidget *) gtk_builder_get_object (builder, "srch");
 
     // create list store
     items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF); 
@@ -1216,6 +1249,7 @@ int main (int argc, char *argv[])
     g_signal_connect (web_btn, "clicked", G_CALLBACK (web_link), NULL);
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
+    g_signal_connect (search_box, "search-changed", G_CALLBACK (search_update), NULL);
 
     gtk_widget_show_all (main_dlg);
     msg_dlg = NULL;
