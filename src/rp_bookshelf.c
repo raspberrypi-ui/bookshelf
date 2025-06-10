@@ -78,9 +78,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ITEM_DESC           2
 #define ITEM_PDFPATH        3
 #define ITEM_COVPATH        4
-#define ITEM_FILENAME       5
-#define ITEM_DOWNLOADED     6
-#define ITEM_COVER          7
+#define ITEM_DOWNLOADED     5
+#define ITEM_COVER          6
 
 /* Publication category */
 
@@ -538,31 +537,29 @@ static void image_download_done (tf_status success)
 
 static void pdf_selected (void)
 {
-    gchar *ppath, *plpath, *fpath;
+    gchar *ppath, *plpath;
     int dl;
 
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, ITEM_FILENAME, &fpath, ITEM_DOWNLOADED, &dl, -1);
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, ITEM_DOWNLOADED, &dl, -1);
 
     if (dl == FILE_LOCKED)
     {
         message (_("This title is only available to contributors at this time."), TRUE);
         g_free (ppath);
-        g_free (fpath);
         return;
     }
 
-    plpath = get_system_path (ppath ? ppath : fpath);
+    plpath = get_system_path (ppath);
     if (access (plpath, F_OK) != -1)
     {
         open_pdf (plpath);
         g_free (plpath);
         g_free (ppath);
-        g_free (fpath);
         return;
     }
     g_free (plpath);
 
-    plpath = get_local_path (ppath ? ppath : fpath, PDF_PATH);
+    plpath = get_local_path (ppath, PDF_PATH);
     if (access (plpath, F_OK) == -1)
     {
         message (_("Downloading - please wait..."), FALSE);
@@ -573,7 +570,6 @@ static void pdf_selected (void)
 
     g_free (plpath);
     g_free (ppath);
-    g_free (fpath);
 }
 
 /* open_pdf - launches default viewer with supplied file */
@@ -801,9 +797,8 @@ static int read_data_file (char *path)
                         }
                         gtk_list_store_append (items, &entry);
                         gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
-                            ITEM_DESC, desc, ITEM_PDFPATH, pdfpath, ITEM_COVPATH, covpath,
-                            ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, 
-                            ITEM_FILENAME, filepath, -1);
+                            ITEM_DESC, desc, ITEM_PDFPATH, pdfpath ? pdfpath : filepath, ITEM_COVPATH, covpath,
+                            ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     }
                     in_item = FALSE;
                     g_free (title);
@@ -1040,12 +1035,12 @@ static void handle_menu_open (GtkWidget *widget, gpointer user_data)
 
 static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data)
 {
-    gchar *cpath, *ppath, *fpath, *clpath, *plpath;
+    gchar *cpath, *ppath, *clpath, *plpath;
     GdkPixbuf *cover;
     int w, h;
 
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &ppath, ITEM_FILENAME, &fpath, -1);
-    plpath = get_local_path (ppath ? ppath : fpath, PDF_PATH);
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &ppath, -1);
+    plpath = get_local_path (ppath, PDF_PATH);
     clpath = get_local_path (cpath, CACHE_PATH);
 
     remove (plpath);
@@ -1054,27 +1049,26 @@ static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data)
     w = gdk_pixbuf_get_width (cover);
     h = gdk_pixbuf_get_height (cover);
     gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-    gdk_pixbuf_composite (ppath ? cloud : padlock, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
+    gdk_pixbuf_composite (strstr (ppath, "https://") ? cloud : padlock, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
 
-    gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, ppath ? FILE_AVAILABLE : FILE_LOCKED, -1);
+    gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, strstr (ppath, "https://") ? FILE_AVAILABLE : FILE_LOCKED, -1);
     refresh_icons ();
 
     g_free (plpath);
     g_free (clpath);
     g_free (ppath);
-    g_free (fpath);
     g_free (cpath);
     g_object_unref (cover);
 }
 
 static void create_cs_menu (GdkEvent *event)
 {
-    gchar *ppath, *fpath, *plpath;
+    gchar *ppath, *plpath;
     GtkWidget *menu, *mi;
     int dl;
 
-    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, ITEM_FILENAME, &fpath, ITEM_DOWNLOADED, &dl, -1);
-    plpath = get_local_path (ppath ? ppath : fpath, PDF_PATH);
+    gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, ITEM_DOWNLOADED, &dl, -1);
+    plpath = get_local_path (ppath, PDF_PATH);
 
     menu = gtk_menu_new ();
 
@@ -1097,7 +1091,6 @@ static void create_cs_menu (GdkEvent *event)
 
     g_free (plpath);
     g_free (ppath);
-    g_free (fpath);
 
     gtk_widget_show_all (menu);
     gtk_menu_popup_at_pointer (GTK_MENU (menu), event);
@@ -1180,7 +1173,12 @@ static gboolean first_draw (GtkWidget *instance)
     cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
 
     message (_("Reading list of publications - please wait..."), FALSE);
+//#define LOCAL_TEST
+#ifdef LOCAL_TEST
+    load_catalogue (SUCCESS);
+#else
     start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
+#endif
     g_signal_handler_disconnect (instance, draw_id);
     return FALSE;
 }
@@ -1242,7 +1240,7 @@ int main (int argc, char *argv[])
     search_box = (GtkWidget *) gtk_builder_get_object (builder, "srch");
 
     // create list store
-    items = gtk_list_store_new (8, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, GDK_TYPE_PIXBUF);
+    items = gtk_list_store_new (7, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, GDK_TYPE_PIXBUF);
 
     // create filtered lists and set up icon views
     for (i = 0; i < NUM_CATS; i++)
