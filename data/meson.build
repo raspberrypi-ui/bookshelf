@@ -3,7 +3,8 @@ data = files (
     'cloud.png',
     'grey.png',
     'new.png',
-    'nocover.png'
+    'nocover.png',
+    'padlock.png'
 )
 
 install_data(data, install_dir: resource_dir)
