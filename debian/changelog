@@ -1,3 +1,9 @@
+rp-bookshelf (1.1) trixie; urgency=medium
+
+  * Fix dependencies
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 15 Jul 2025 14:41:18 +0100
+
 rp-bookshelf (1.0) trixie; urgency=medium
 
   * Create symlinks to user guide at startup
