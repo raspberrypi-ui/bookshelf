@@ -1162,6 +1162,8 @@ int main (int argc, char *argv[])
     GtkCellLayout *layout;
     GtkCellRenderer *renderer;
     long i;
+    char *url, *path;
+    FILE *fp;
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
@@ -1182,6 +1184,23 @@ int main (int argc, char *argv[])
 
     // terminate zombies automatically
     signal (SIGCHLD, SIG_IGN);
+
+    // check for URL to handle
+    if (argc > 1)
+    {
+        url = strstr (argv[1], "rp-bookshelf://open?access_key=");
+        if (url)
+        {
+            path = g_build_filename (g_get_home_dir (), CACHE_PATH, "access_key", NULL);
+            fp = fopen (path, "w");
+            if (fp)
+            {
+                fprintf (fp, url + 31);
+                fclose (fp);
+            }
+            g_free (path);
+        }
+    }
 
     // GTK setup
     gtk_init (&argc, &argv);
