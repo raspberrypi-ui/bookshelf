@@ -635,25 +635,9 @@ static void get_pending_pdf (void)
 /* Catalogue management                                                       */
 /*----------------------------------------------------------------------------*/
 
-#define N_REMAPS 16
+#define N_REMAPS 0
 
 const char *titlemap[N_REMAPS][2] = {
-    {"Book of Making Volume 1",                          "HackSpace Book of Making Volume 1"},
-    {"Book of Making Volume 2",                          "HackSpace Book of Making Volume 2"},
-    {"Code the Classics — Volume 1",                     "Code the Classics Volume 1"},
-    {"Get Started with Raspberry Pi",                    NULL},
-    {"Beginner's Guide",                                 NULL},
-    {"Beginner's Guide v2",                              NULL},
-    {"Raspberry Pi Beginner's Guide v3",                 NULL},
-    {"Raspberry Pi Beginner's Guide 4th Edition",        NULL},
-    {"Raspberry Pi Beginner's Guide 5th Edition",        "Raspberry Pi Beginner's Guide"},
-    {"Beginner's Book 1",                                NULL},
-    {"Command Line",                                     NULL},
-    {"MagPi SE 1",                                       NULL},
-    {"C &amp; GUI Programming 1st Edition",              NULL},
-    {"C &amp; GUI Programming 2nd Edition",              "C &amp; GUI Programming"},
-    {"Retro Gaming with Raspberry Pi",                   NULL},
-    {"Retro Gaming with Raspberry Pi 2nd Edition",       "Retro Gaming with Raspberry Pi"}
 };
 
 static void remap_title (char **title)
