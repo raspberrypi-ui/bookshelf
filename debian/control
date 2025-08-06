@@ -9,6 +9,6 @@ Homepage: http://raspberrypi.com/
 
 Package: rp-bookshelf
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, desktop-file-utils
 Description: Raspberry Pi publications
  Browser for Raspberry Pi Press publications in PDF format
