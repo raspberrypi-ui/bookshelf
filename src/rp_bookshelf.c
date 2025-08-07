@@ -134,6 +134,8 @@ GtkTreeIter selitem, covitem;
 
 char *catpath, *cbpath;
 
+char *url_arg;
+
 /* Libcurl variables */
 
 CURL *http_handle;
@@ -1198,6 +1200,74 @@ static gboolean first_draw (GtkWidget *instance)
     return FALSE;
 }
 
+/*----------------------------------------------------------------------------*/
+/* DBus interface                                                             */
+/*----------------------------------------------------------------------------*/
+
+static GDBusNodeInfo *introspection_data = NULL;
+
+static const gchar introspection_xml[] =
+  "<node>"
+  "  <interface name='com.raspberrypi.bookshelf'>"
+  "    <method name='NewAccessKey'>"
+  "      <arg type='s' name='key' direction='in'/>"
+  "    </method>"
+  "  </interface>"
+  "</node>";
+
+static GVariant *handle_get_property (GDBusConnection*, const gchar*, const gchar*, const gchar*, const gchar*,
+    GError**, gpointer)
+{
+    return NULL;
+}
+
+static gboolean handle_set_property (GDBusConnection*, const gchar*, const gchar*, const gchar*, const gchar*,
+    GVariant *, GError**, gpointer)
+{
+    return TRUE;
+}
+
+static void handle_method_call (GDBusConnection *connection, const gchar *sender, const gchar *object_path, const gchar *interface_name,
+    const gchar *method_name, GVariant *parameters, GDBusMethodInvocation *invocation, gpointer user_data)
+{
+    if (g_strcmp0 (method_name, "NewAccessKey") == 0)
+    {
+        char *key;
+        g_variant_get (parameters, "(&s)", &key);
+        printf ("New access key received %s\n", key);
+
+        g_dbus_method_invocation_return_value (invocation, NULL);
+    }
+    else
+    {
+        g_dbus_method_invocation_return_dbus_error (invocation, "com.raspberrypi.rpbookshelf.Failed", "Unsupported method call");
+    }
+}
+
+static const GDBusInterfaceVTable interface_vtable =
+{
+    handle_method_call,
+    handle_get_property,
+    handle_set_property,
+    { 0 }
+};
+
+void name_acquired (GDBusConnection *connection, const gchar *name, gpointer user_data)
+{
+    introspection_data = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
+    g_dbus_connection_register_object (connection, "/com/raspberrypi/bookshelf", introspection_data->interfaces[0],
+        &interface_vtable, NULL, NULL, NULL);
+}
+
+void name_lost (GDBusConnection *connection, const gchar *name, gpointer user_data)
+{
+    GDBusConnection *c = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+    GDBusProxy *p = g_dbus_proxy_new_sync (c, G_DBUS_PROXY_FLAGS_NONE, NULL,
+        "com.raspberrypi.bookshelf", "/com/raspberrypi/bookshelf", "com.raspberrypi.bookshelf", NULL, NULL);
+    g_dbus_proxy_call_sync (p, "NewAccessKey", g_variant_new ("(s)", url_arg), G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL);
+    g_dbus_connection_close_sync (c, NULL, NULL);
+    exit (0);
+}
 
 /*----------------------------------------------------------------------------*/
 /* Main window                                                                */
@@ -1211,6 +1281,12 @@ int main (int argc, char *argv[])
     long i;
     char *url, *path;
     FILE *fp;
+    guint busid;
+
+    if (argc > 1) url_arg = g_strdup (argv[1]);
+    else url_arg = g_strdup_printf ("<none>");
+    busid = g_bus_own_name (G_BUS_TYPE_SESSION, "com.raspberrypi.bookshelf", G_BUS_NAME_OWNER_FLAGS_NONE,
+        NULL, name_acquired, name_lost, NULL, NULL);
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
@@ -1333,6 +1409,7 @@ int main (int argc, char *argv[])
 
     g_object_unref (builder);
     gtk_widget_destroy (main_dlg);
+    g_bus_unown_name (busid);
     return 0;
 }
 
