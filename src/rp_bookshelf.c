@@ -173,6 +173,7 @@ static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
 static void remap_title (char **title);
 static void load_catalogue (tf_status success);
+static void load_contrib_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char *lang, char **dest);
 static int read_data_file (char *path);
 static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
@@ -676,6 +677,30 @@ static void load_catalogue (tf_status success)
     read_data_file (PACKAGE_DATA_DIR "/cat.xml");
 }
 
+static void load_contrib_catalogue (tf_status success)
+{
+    hide_message ();
+
+    if (success == SUCCESS && read_data_file (catpath))
+    {
+        gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
+        system (cmd);
+        g_free (cmd);
+        return;
+    }
+
+    if (success == NOSPACE)
+    {
+        message (_("Disk full - unable to download updates"), TRUE);
+        if (read_data_file (cbpath)) return;
+        read_data_file (PACKAGE_DATA_DIR "/cat.xml");
+        return;
+    }
+
+    // download the non-contributor file
+    start_curl_download (CATALOGUE_URL, catpath, load_catalogue, NULL);
+}
+
 /* get_param - helper function to look for tag in line */
 
 static void get_param (char *linebuf, char *name, char *lang, char **dest)
@@ -1165,7 +1190,7 @@ static gboolean first_draw (GtkWidget *instance)
     }
 
     if (access_key)
-        start_curl_download (CONTRIBUTOR_URL, catpath, load_catalogue, access_key);
+        start_curl_download (CONTRIBUTOR_URL, catpath, load_contrib_catalogue, access_key);
     else
         start_curl_download (CATALOGUE_URL, catpath, load_catalogue, NULL);
 #endif
