@@ -61,6 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define BOOKS_URL       "https://store.rpipress.cc/collections/latest-bookazines"
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.com/bookshelf.xml"
+#define CONTRIBUTOR_URL "https://magpi.raspberrypi.com/contributor.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/Bookshelf/"
 #define GUIDE_PATH      "/usr/share/userguide/"
@@ -158,7 +159,7 @@ static void create_dir (char *dir);
 static unsigned long int get_val (char *cmd);
 static char *get_string (char *cmd);
 static curl_off_t free_space (void);
-static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success));
+static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success), char *auth_key);
 static gboolean curl_poll (gpointer data);
 static void finish_curl_download (void);
 static int progress_func (GtkWidget *bar, curl_off_t t, curl_off_t d, curl_off_t ultotal, curl_off_t ulnow);
@@ -302,7 +303,7 @@ static curl_off_t free_space (void)
 /* libcurl interface                                                          */
 /*----------------------------------------------------------------------------*/
 
-static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success))
+static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success), char *auth_key)
 {
     int still_running;
     cancelled = FALSE;
@@ -326,6 +327,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
     curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt (http_handle, CURLOPT_XFERINFOFUNCTION, progress_func);
+    if (auth_key) curl_easy_setopt (http_handle, CURLOPT_XOAUTH2_BEARER, auth_key);
 
     curl_multi_add_handle (multi_handle, http_handle);
     if (curl_multi_perform (multi_handle, &still_running) == CURLM_OK && still_running)
@@ -495,7 +497,7 @@ static gboolean find_cover_for_item (gpointer data)
     }
     else
     {
-        start_curl_download (cpath, clpath, image_download_done);
+        start_curl_download (cpath, clpath, image_download_done, NULL);
         g_free (clpath);
         g_free (cpath);
         return FALSE;
@@ -563,7 +565,7 @@ static void pdf_selected (void)
     if (access (plpath, F_OK) == -1)
     {
         message (_("Downloading - please wait..."), FALSE);
-        if (!cover_dl) start_curl_download (ppath, plpath, pdf_download_done);
+        if (!cover_dl) start_curl_download (ppath, plpath, pdf_download_done, NULL);
         else pdf_dl_req = TRUE;
     }
     else open_pdf (plpath);
@@ -624,7 +626,7 @@ static void get_pending_pdf (void)
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_PDFPATH, &ppath, -1);
 
     plpath = get_local_path (ppath, PDF_PATH);
-    start_curl_download (ppath, plpath, pdf_download_done);
+    start_curl_download (ppath, plpath, pdf_download_done, NULL);
 
     g_free (plpath);
     g_free (ppath);
@@ -1137,6 +1139,10 @@ static void close_prog (GtkButton* btn, gpointer ptr)
 
 static gboolean first_draw (GtkWidget *instance)
 {
+    char *access_key, *path;
+    size_t len;
+    FILE *fp;
+
     catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
     cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
 
@@ -1145,7 +1151,23 @@ static gboolean first_draw (GtkWidget *instance)
 #ifdef LOCAL_TEST
     load_catalogue (SUCCESS);
 #else
-    start_curl_download (CATALOGUE_URL, catpath, load_catalogue);
+    access_key = NULL;
+    path = g_build_filename (g_get_home_dir (), CACHE_PATH, "access_key", NULL);
+    fp = fopen (path, "r");
+    if (fp)
+    {
+        if (getline (&access_key, &len, fp) <= 1)
+        {
+            g_free (access_key);
+            access_key = NULL;
+        }
+        fclose (fp);
+    }
+
+    if (access_key)
+        start_curl_download (CONTRIBUTOR_URL, catpath, load_catalogue, access_key);
+    else
+        start_curl_download (CATALOGUE_URL, catpath, load_catalogue, NULL);
 #endif
     g_signal_handler_disconnect (instance, draw_id);
     return FALSE;
