@@ -376,6 +376,7 @@ static void close_dbus (void)
 
 static void name_acquired (GDBusConnection *connection, const gchar *name, gpointer)
 {
+    /* name not on DBus, so this is the first instance - set up handler for NewURL function */
     introspection_data = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
     g_dbus_connection_register_object (connection, DBUS_OBJECT_PATH, introspection_data->interfaces[0],
         &interface_vtable, NULL, NULL, NULL);
@@ -383,11 +384,17 @@ static void name_acquired (GDBusConnection *connection, const gchar *name, gpoin
 
 static void name_lost (GDBusConnection *connection, const gchar *name, gpointer)
 {
-    GDBusConnection *c = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
-    GDBusProxy *p = g_dbus_proxy_new_sync (c, G_DBUS_PROXY_FLAGS_NONE, NULL,
-        DBUS_BUS_NAME, DBUS_OBJECT_PATH, DBUS_INTERFACE_NAME, NULL, NULL);
-    g_dbus_proxy_call_sync (p, "NewURL", g_variant_new ("(s)", url_arg), G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL);
-    g_dbus_connection_close_sync (c, NULL, NULL);
+    GDBusProxy *proxy;
+    GVariant *var;
+
+    /* name already on DBus, so application already running - call the NewURL function on the existing instance and then exit */
+    proxy = g_dbus_proxy_new_sync (connection, G_DBUS_PROXY_FLAGS_NONE, NULL, DBUS_BUS_NAME, DBUS_OBJECT_PATH, DBUS_INTERFACE_NAME, NULL, NULL);
+    var = g_variant_new ("(s)", url_arg);
+    g_dbus_proxy_call_sync (proxy, "NewURL", var, G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL);
+    g_dbus_connection_close_sync (connection, NULL, NULL);
+
+    g_free (var);
+    g_object_unref (proxy);
     exit (0);
 }
 
