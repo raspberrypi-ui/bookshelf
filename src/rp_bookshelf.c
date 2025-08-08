@@ -57,8 +57,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COVER_SIZE      128
 #define CELL_WIDTH      150
 
-#define MAGPI_URL       "https://store.rpipress.cc/collections/the-magpi-essentials"
-#define BOOKS_URL       "https://store.rpipress.cc/collections/latest-bookazines"
+#define SUBSCRIBE_URL   "https://store.rpipress.cc/collections/the-magpi-essentials"
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.com/bookshelf.xml"
 #define CONTRIBUTOR_URL "https://magpi.raspberrypi.com/contributor.xml"
@@ -746,6 +745,7 @@ static void load_contrib_catalogue (tf_status success)
         gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
         system (cmd);
         g_free (cmd);
+        gtk_widget_hide (web_btn);
         return;
     }
 
@@ -1204,13 +1204,8 @@ static void web_link (GtkButton* btn, gpointer ptr)
 {
     if (fork () == 0)
     {
-        switch (gtk_notebook_get_current_page (GTK_NOTEBOOK (items_nb)))
-        {
-            case 0 :    execl ("/usr/bin/xdg-open", "xdg-open", MAGPI_URL, NULL);
-                        exit (0);
-            case 1 :    execl ("/usr/bin/xdg-open", "xdg-open", BOOKS_URL, NULL);
-                        exit (0);
-        }
+        execl ("/usr/bin/xdg-open", "xdg-open", SUBSCRIBE_URL, NULL);
+        exit (0);
     }
 }
 

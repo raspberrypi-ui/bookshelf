@@ -97,11 +97,11 @@
             <property name="spacing">10</property>
             <child>
               <object class="GtkButton" id="button_web">
-                <property name="label" translatable="yes">_Website...</property>
+                <property name="label" translatable="yes">_Contribute...</property>
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
-                <property name="tooltip-text" translatable="yes">Visit the Raspberry Pi Press website to see other titles and to purchase print copies and subscriptions</property>
+                <property name="tooltip-text" translatable="yes">Visit the Raspberry Pi Press website to purchase a subscription and unlock all titles</property>
                 <property name="use-underline">True</property>
               </object>
               <packing>
