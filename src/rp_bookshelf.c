@@ -1252,18 +1252,6 @@ static const gchar introspection_xml[] =
   "  </interface>"
   "</node>";
 
-static GVariant *handle_get_property (GDBusConnection*, const gchar*, const gchar*, const gchar*, const gchar*,
-    GError**, gpointer)
-{
-    return NULL;
-}
-
-static gboolean handle_set_property (GDBusConnection*, const gchar*, const gchar*, const gchar*, const gchar*,
-    GVariant *, GError**, gpointer)
-{
-    return TRUE;
-}
-
 static void handle_method_call (GDBusConnection *connection, const gchar *sender, const gchar *object_path, const gchar *interface_name,
     const gchar *method_name, GVariant *parameters, GDBusMethodInvocation *invocation, gpointer user_data)
 {
@@ -1281,7 +1269,7 @@ static void handle_method_call (GDBusConnection *connection, const gchar *sender
 
 static const GDBusInterfaceVTable interface_vtable =
 {
-    handle_method_call, handle_get_property, handle_set_property, { 0 }
+    handle_method_call, NULL, NULL, { 0 }
 };
 
 static void name_acquired (GDBusConnection *connection, const gchar *name, gpointer user_data)
