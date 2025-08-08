@@ -134,6 +134,8 @@ GtkTreeIter selitem, covitem;
 
 char *catpath, *cbpath;
 
+/* Saved copy of argv[1] */
+
 char *url_arg;
 
 /* Libcurl variables */
@@ -161,6 +163,7 @@ static void create_dir (char *dir);
 static unsigned long int get_val (char *cmd);
 static char *get_string (char *cmd);
 static curl_off_t free_space (void);
+static gboolean save_access_key (char *url);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success), char *auth_key);
 static gboolean curl_poll (gpointer data);
 static void finish_curl_download (void);
@@ -174,6 +177,7 @@ static void open_pdf (char *path);
 static void pdf_download_done (tf_status success);
 static void get_pending_pdf (void);
 static void remap_title (char **title);
+static void download_catalogue (void);
 static void load_catalogue (tf_status success);
 static void load_contrib_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char *lang, char **dest);
@@ -301,6 +305,28 @@ static curl_off_t free_space (void)
     return ffs;
 }
 
+/* save_access_key - check for a valid access key and write it to the cache file */
+
+static gboolean save_access_key (char *url)
+{
+    char *furl, *path;
+    FILE *fp;
+
+    furl = strstr (url, "rp-bookshelf://open?access_key=");
+    if (furl)
+    {
+        path = g_build_filename (g_get_home_dir (), CACHE_PATH, "access_key", NULL);
+        fp = fopen (path, "w");
+        g_free (path);
+        if (fp)
+        {
+            fprintf (fp, furl + 31);
+            fclose (fp);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
 
 /*----------------------------------------------------------------------------*/
 /* libcurl interface                                                          */
@@ -660,6 +686,38 @@ static void remap_title (char **title)
     }
 }
 
+/* download_catalogue - initiate curl download of appropriate catalogue XML file */
+
+static void download_catalogue (void)
+{
+    char *access_key, *path;
+    size_t len;
+    FILE *fp;
+
+    catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
+    cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
+
+    message (_("Reading list of publications - please wait..."), FALSE);
+
+    access_key = NULL;
+    path = g_build_filename (g_get_home_dir (), CACHE_PATH, "access_key", NULL);
+    fp = fopen (path, "r");
+    if (fp)
+    {
+        if (getline (&access_key, &len, fp) <= 1)
+        {
+            g_free (access_key);
+            access_key = NULL;
+        }
+        fclose (fp);
+    }
+
+    if (access_key)
+        start_curl_download (CONTRIBUTOR_URL, catpath, load_contrib_catalogue, access_key);
+    else
+        start_curl_download (CATALOGUE_URL, catpath, load_catalogue, NULL);
+}
+
 /* load_catalogue - open a catalogue file - either main, backup or fallback */
 
 static void load_catalogue (tf_status success)
@@ -733,6 +791,8 @@ static int read_data_file (char *path)
     size_t nchars = 0;
     GtkTreeIter entry;
     int i, category = -1, in_item = FALSE, downloaded, counts[NUM_CATS], count = 0;
+
+    gtk_list_store_clear (items);
 
     for (i = 0; i < NUM_CATS; i++) counts[i] = 0;
 
@@ -1166,36 +1226,12 @@ static void close_prog (GtkButton* btn, gpointer ptr)
 
 static gboolean first_draw (GtkWidget *instance)
 {
-    char *access_key, *path;
-    size_t len;
-    FILE *fp;
-
-    catpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "cat.xml");
-    cbpath = g_strdup_printf ("%s%s%s", g_get_home_dir (), CACHE_PATH, "catbak.xml");
-
-    message (_("Reading list of publications - please wait..."), FALSE);
 //#define LOCAL_TEST
 #ifdef LOCAL_TEST
     load_catalogue (SUCCESS);
 #else
-    access_key = NULL;
-    path = g_build_filename (g_get_home_dir (), CACHE_PATH, "access_key", NULL);
-    fp = fopen (path, "r");
-    if (fp)
-    {
-        if (getline (&access_key, &len, fp) <= 1)
-        {
-            g_free (access_key);
-            access_key = NULL;
-        }
-        fclose (fp);
-    }
-
-    if (access_key)
-        start_curl_download (CONTRIBUTOR_URL, catpath, load_contrib_catalogue, access_key);
-    else
-        start_curl_download (CATALOGUE_URL, catpath, load_catalogue, NULL);
-#endif
+    download_catalogue ();
+ #endif
     g_signal_handler_disconnect (instance, draw_id);
     return FALSE;
 }
@@ -1204,13 +1240,19 @@ static gboolean first_draw (GtkWidget *instance)
 /* DBus interface                                                             */
 /*----------------------------------------------------------------------------*/
 
+#define DBUS_BUS_NAME "com.raspberrypi.bookshelf"
+#define DBUS_OBJECT_PATH "/com/raspberrypi/bookshelf"
+#define DBUS_INTERFACE_NAME "com.raspberrypi.bookshelf"
+
+static guint busid;
+
 static GDBusNodeInfo *introspection_data = NULL;
 
 static const gchar introspection_xml[] =
   "<node>"
-  "  <interface name='com.raspberrypi.bookshelf'>"
-  "    <method name='NewAccessKey'>"
-  "      <arg type='s' name='key' direction='in'/>"
+  "  <interface name='" DBUS_INTERFACE_NAME "'>"
+  "    <method name='NewURL'>"
+  "      <arg type='s' name='url' direction='in'/>"
   "    </method>"
   "  </interface>"
   "</node>";
@@ -1230,43 +1272,49 @@ static gboolean handle_set_property (GDBusConnection*, const gchar*, const gchar
 static void handle_method_call (GDBusConnection *connection, const gchar *sender, const gchar *object_path, const gchar *interface_name,
     const gchar *method_name, GVariant *parameters, GDBusMethodInvocation *invocation, gpointer user_data)
 {
-    if (g_strcmp0 (method_name, "NewAccessKey") == 0)
-    {
-        char *key;
-        g_variant_get (parameters, "(&s)", &key);
-        printf ("New access key received %s\n", key);
+    char *key;
 
-        g_dbus_method_invocation_return_value (invocation, NULL);
-    }
-    else
+    if (g_strcmp0 (method_name, "NewURL") == 0)
     {
-        g_dbus_method_invocation_return_dbus_error (invocation, "com.raspberrypi.rpbookshelf.Failed", "Unsupported method call");
+        g_dbus_method_invocation_return_value (invocation, NULL);
+
+        g_variant_get (parameters, "(&s)", &key);
+        if (save_access_key (key)) download_catalogue ();
     }
+    else g_dbus_method_invocation_return_dbus_error (invocation, DBUS_INTERFACE_NAME ".Failed", "Unsupported method call");
 }
 
 static const GDBusInterfaceVTable interface_vtable =
 {
-    handle_method_call,
-    handle_get_property,
-    handle_set_property,
-    { 0 }
+    handle_method_call, handle_get_property, handle_set_property, { 0 }
 };
 
-void name_acquired (GDBusConnection *connection, const gchar *name, gpointer user_data)
+static void name_acquired (GDBusConnection *connection, const gchar *name, gpointer user_data)
 {
     introspection_data = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
-    g_dbus_connection_register_object (connection, "/com/raspberrypi/bookshelf", introspection_data->interfaces[0],
+    g_dbus_connection_register_object (connection, DBUS_OBJECT_PATH, introspection_data->interfaces[0],
         &interface_vtable, NULL, NULL, NULL);
 }
 
-void name_lost (GDBusConnection *connection, const gchar *name, gpointer user_data)
+static void name_lost (GDBusConnection *connection, const gchar *name, gpointer user_data)
 {
     GDBusConnection *c = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
     GDBusProxy *p = g_dbus_proxy_new_sync (c, G_DBUS_PROXY_FLAGS_NONE, NULL,
-        "com.raspberrypi.bookshelf", "/com/raspberrypi/bookshelf", "com.raspberrypi.bookshelf", NULL, NULL);
-    g_dbus_proxy_call_sync (p, "NewAccessKey", g_variant_new ("(s)", url_arg), G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL);
+        DBUS_BUS_NAME, DBUS_OBJECT_PATH, DBUS_INTERFACE_NAME, NULL, NULL);
+    g_dbus_proxy_call_sync (p, "NewURL", g_variant_new ("(s)", url_arg), G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL);
     g_dbus_connection_close_sync (c, NULL, NULL);
     exit (0);
+}
+
+static void init_dbus (void)
+{
+    busid = g_bus_own_name (G_BUS_TYPE_SESSION, DBUS_BUS_NAME, G_BUS_NAME_OWNER_FLAGS_NONE,
+        NULL, name_acquired, name_lost, NULL, NULL);
+}
+
+static void close_dbus (void)
+{
+    g_bus_unown_name (busid);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1279,14 +1327,10 @@ int main (int argc, char *argv[])
     GtkCellLayout *layout;
     GtkCellRenderer *renderer;
     long i;
-    char *url, *path;
-    FILE *fp;
-    guint busid;
 
     if (argc > 1) url_arg = g_strdup (argv[1]);
     else url_arg = g_strdup_printf ("<none>");
-    busid = g_bus_own_name (G_BUS_TYPE_SESSION, "com.raspberrypi.bookshelf", G_BUS_NAME_OWNER_FLAGS_NONE,
-        NULL, name_acquired, name_lost, NULL, NULL);
+    init_dbus ();
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
@@ -1309,21 +1353,7 @@ int main (int argc, char *argv[])
     signal (SIGCHLD, SIG_IGN);
 
     // check for URL to handle
-    if (argc > 1)
-    {
-        url = strstr (argv[1], "rp-bookshelf://open?access_key=");
-        if (url)
-        {
-            path = g_build_filename (g_get_home_dir (), CACHE_PATH, "access_key", NULL);
-            fp = fopen (path, "w");
-            if (fp)
-            {
-                fprintf (fp, url + 31);
-                fclose (fp);
-            }
-            g_free (path);
-        }
-    }
+    if (argc > 1) save_access_key (argv[1]);
 
     // GTK setup
     gtk_init (&argc, &argv);
@@ -1409,6 +1439,7 @@ int main (int argc, char *argv[])
 
     g_object_unref (builder);
     gtk_widget_destroy (main_dlg);
+    close_dbus ();
     g_bus_unown_name (busid);
     return 0;
 }
