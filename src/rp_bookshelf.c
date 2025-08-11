@@ -215,7 +215,8 @@ static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer
 static void symlink_user_guide (void);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
 static gboolean cancel_clicked (GtkButton *button, gpointer data);
-static void message (char *msg, gboolean wait);
+static gboolean download_fallback (GtkButton *button, gpointer data);
+static void message (char *msg, int wait);
 static void hide_message (void);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void book_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
@@ -827,6 +828,7 @@ static void load_catalogue (tf_status success)
 {
     hide_message ();
 
+    gtk_widget_show (contrib_btn);
     if (success == SUCCESS && read_data_file (catpath))
     {
         gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
@@ -861,8 +863,7 @@ static void load_contrib_catalogue (tf_status success)
         return;
     }
 
-    // download the non-contributor file
-    start_curl_download (CATALOGUE_URL, catpath, load_catalogue, NULL);
+    message (_("Could not validate your subscription. Try logging in again."), -1);
 }
 
 /* get_param - helper function to look for tag in line */
@@ -1115,7 +1116,15 @@ static gboolean cancel_clicked (GtkButton *button, gpointer data)
     return FALSE;
 }
 
-static void message (char *msg, gboolean wait)
+static gboolean download_fallback (GtkButton *button, gpointer data)
+{
+    // download the non-contributor file
+    message (_("Reading list of publications - please wait..."), FALSE);
+    start_curl_download (CATALOGUE_URL, catpath, load_catalogue, NULL);
+    return FALSE;
+}
+
+static void message (char *msg, int wait)
 {
     if (!msg_dlg)
     {
@@ -1139,7 +1148,10 @@ static void message (char *msg, gboolean wait)
 
     if (wait)
     {
-        g_signal_connect (msg_ok, "clicked", G_CALLBACK (ok_clicked), NULL);
+        if (wait == 1)
+            g_signal_connect (msg_ok, "clicked", G_CALLBACK (ok_clicked), NULL);
+        else
+            g_signal_connect (msg_ok, "clicked", G_CALLBACK (download_fallback), NULL);
         gtk_widget_hide (msg_cancel);
         gtk_widget_show (msg_ok);
         gtk_widget_hide (msg_pb);
