@@ -445,6 +445,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     curl_easy_setopt (http_handle, CURLOPT_WRITEDATA, outfile);
     curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt (http_handle, CURLOPT_XFERINFOFUNCTION, progress_func);
+    curl_easy_setopt (http_handle, CURLOPT_FAILONERROR, 1L);
     if (auth_key) curl_easy_setopt (http_handle, CURLOPT_XOAUTH2_BEARER, auth_key);
 
     curl_multi_add_handle (multi_handle, http_handle);
@@ -475,6 +476,7 @@ static gboolean curl_poll (gpointer data)
     if (still_running) return TRUE;
     else
     {
+        downstat = SUCCESS;
         finish_curl_download ();
         return FALSE;
     }
@@ -482,6 +484,19 @@ static gboolean curl_poll (gpointer data)
 
 static void finish_curl_download (void)
 {
+    CURLMsg *msg;
+    int nmsgs;
+
+    msg = curl_multi_info_read (multi_handle, &nmsgs);
+    if (msg && msg->msg == CURLMSG_DONE)
+    {
+        if (msg->data.result != CURLE_OK)
+        {
+            printf ("curl error %d\n", msg->data.result);
+            downstat = FAILURE;
+        }
+    }
+
     if (outfile) fclose (outfile);
     if (downstat == SUCCESS) rename (tmpname, fname);
     else remove (tmpname);
@@ -516,7 +531,6 @@ static int progress_func (GtkWidget *bar, curl_off_t t, curl_off_t d, curl_off_t
                 downstat = NOSPACE;
                 return 1;
             }
-            downstat = SUCCESS;
         }
         if (msg_pb)
         {
@@ -983,7 +997,7 @@ static int read_data_file (char *path)
     // hide any tab with no entries
     for (i = 0; i < NUM_CATS; i++)
     {
-        if (!counts[i]) gtk_widget_hide (gtk_notebook_get_nth_page (GTK_NOTEBOOK (items_nb), i));
+        gtk_widget_set_visible (gtk_notebook_get_nth_page (GTK_NOTEBOOK (items_nb), i), !!counts[i]);
     }
     if (!count) return count;
 
@@ -1460,7 +1474,6 @@ int main (int argc, char *argv[])
     g_object_unref (builder);
     gtk_widget_destroy (main_dlg);
     close_dbus ();
-    g_bus_unown_name (busid);
     return 0;
 }
 
