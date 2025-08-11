@@ -490,6 +490,7 @@ static void finish_curl_download (void)
         if (msg->data.result != CURLE_OK)
         {
             printf ("curl error %d\n", msg->data.result);
+            if (downstat == SUCCESS) downstat = FAILURE;
         }
     }
 
@@ -833,40 +834,49 @@ static void load_catalogue (tf_status success)
                             return;
                         }
                         message (_("Downloaded catalogue not valid"), TRUE);
+                        read_data_file (cbpath);
                         break;
 
         case NOSPACE :  message (_("Disk full - unable to download updates"), TRUE);
+                        read_data_file (cbpath);
                         break;
 
         case FAILURE :  message (_("Unable to download updates"), TRUE);
+                        read_data_file (cbpath);
                         break;
-    }
 
-    if (success != CANCELLED) read_data_file (cbpath);
+        default :       break;
+    }
 }
 
 static void load_contrib_catalogue (tf_status success)
 {
     hide_message ();
 
-    if (success == SUCCESS && read_data_file (catpath))
-    {
-        gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
-        system (cmd);
-        g_free (cmd);
-        gtk_widget_hide (contrib_btn);
-        return;
-    }
+    gtk_widget_hide (contrib_btn);
 
-    if (success == NOSPACE)
+    switch (success)
     {
-        message (_("Disk full - unable to download updates"), TRUE);
-        if (read_data_file (cbpath)) return;
-        read_data_file (PACKAGE_DATA_DIR "/cat.xml");
-        return;
-    }
+        case SUCCESS :  if (read_data_file (catpath))
+                        {
+                            gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
+                            system (cmd);
+                            g_free (cmd);
+                            return;
+                        }
+                        message (_("Downloaded catalogue not valid"), TRUE);
+                        read_data_file (cbpath);
+                        break;
 
-    message (_("Could not validate your subscription. Try logging in again."), -1);
+        case NOSPACE :  message (_("Disk full - unable to download updates"), TRUE);
+                        read_data_file (cbpath);
+                        break;
+
+        case FAILURE :  message (_("Could not validate your subscription. Try logging in again."), -1);
+                        break;
+
+        default :       break;
+    }
 }
 
 /* get_param - helper function to look for tag in line */
