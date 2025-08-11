@@ -57,7 +57,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COVER_SIZE      128
 #define CELL_WIDTH      150
 
-#define SUBSCRIBE_URL   "https://store.rpipress.cc/collections/the-magpi-essentials"
+#define MAGPI_URL       "https://magazine.raspberrypi.com/issues"
+#define BOOKS_URL       "https://magazine.raspberrypi.com/books"
+
+#define SUBSCRIBE_URL   "https://magazine.raspberrypi.com/TBD"
 
 #define CATALOGUE_URL   "https://magpi.raspberrypi.com/bookshelf.xml"
 #define CONTRIBUTOR_URL "https://magpi.raspberrypi.com/contributor.xml"
@@ -114,7 +117,7 @@ typedef enum {
 
 /* Controls */
 
-static GtkWidget *main_dlg, *close_btn, *web_btn, *items_nb, *search_box;
+static GtkWidget *main_dlg, *close_btn, *web_btn, *items_nb, *search_box, *contrib_btn;
 static GtkWidget *item_ivs[NUM_CATS];
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
@@ -223,6 +226,7 @@ static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer us
 static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
 static void refresh_icons (void);
 static void web_link (GtkButton* btn, gpointer ptr);
+static void contribute (GtkButton* btn, gpointer ptr);
 static void close_prog (GtkButton* btn, gpointer ptr);
 static gboolean first_draw (GtkWidget *instance);
 
@@ -831,7 +835,7 @@ static void load_contrib_catalogue (tf_status success)
         gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
         system (cmd);
         g_free (cmd);
-        gtk_widget_hide (web_btn);
+        gtk_widget_hide (contrib_btn);
         return;
     }
 
@@ -1290,6 +1294,20 @@ static void web_link (GtkButton* btn, gpointer ptr)
 {
     if (fork () == 0)
     {
+        switch (gtk_notebook_get_current_page (GTK_NOTEBOOK (items_nb)))
+        {
+            case 0 :    execl ("/usr/bin/xdg-open", "xdg-open", MAGPI_URL, NULL);
+                        exit (0);
+            case 1 :    execl ("/usr/bin/xdg-open", "xdg-open", BOOKS_URL, NULL);
+                        exit (0);
+        }
+    }
+}
+
+static void contribute (GtkButton* btn, gpointer ptr)
+{
+    if (fork () == 0)
+    {
         execl ("/usr/bin/xdg-open", "xdg-open", SUBSCRIBE_URL, NULL);
         exit (0);
     }
@@ -1376,6 +1394,7 @@ int main (int argc, char *argv[])
     item_ivs[CAT_BOOKS] = (GtkWidget *) gtk_builder_get_object (builder, "iconview_books");
     close_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_ok");
     web_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_web");
+    contrib_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_contrib");
     items_nb = (GtkWidget *) gtk_builder_get_object (builder, "notebook1");
     search_box = (GtkWidget *) gtk_builder_get_object (builder, "srch");
 
@@ -1422,6 +1441,7 @@ int main (int argc, char *argv[])
     }
 
     g_signal_connect (web_btn, "clicked", G_CALLBACK (web_link), NULL);
+    g_signal_connect (contrib_btn, "clicked", G_CALLBACK (contribute), NULL);
     g_signal_connect (close_btn, "clicked", G_CALLBACK (close_prog), NULL);
     g_signal_connect (main_dlg, "delete_event", G_CALLBACK (close_prog), NULL);
     g_signal_connect (search_box, "search-changed", G_CALLBACK (search_update), NULL);
