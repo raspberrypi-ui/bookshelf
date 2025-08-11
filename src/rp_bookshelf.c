@@ -452,11 +452,7 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     curl_multi_add_handle (multi_handle, http_handle);
     if (curl_multi_perform (multi_handle, &still_running) == CURLM_OK && still_running)
         curl_timer = g_idle_add (curl_poll, NULL);
-    else
-    {
-        downstat = FAILURE;
-        finish_curl_download ();
-    }
+    else finish_curl_download ();
 }
 
 static gboolean curl_poll (gpointer data)
@@ -477,7 +473,7 @@ static gboolean curl_poll (gpointer data)
     if (still_running) return TRUE;
     else
     {
-        downstat = SUCCESS;
+        if (downstat == FAILURE) downstat = SUCCESS;
         finish_curl_download ();
         return FALSE;
     }
@@ -494,7 +490,6 @@ static void finish_curl_download (void)
         if (msg->data.result != CURLE_OK)
         {
             printf ("curl error %d\n", msg->data.result);
-            downstat = FAILURE;
         }
     }
 
@@ -525,14 +520,12 @@ static int progress_func (GtkWidget *bar, curl_off_t t, curl_off_t d, curl_off_t
     }
     if (prog >= 0.0 && prog <= 1.0)
     {
-        if (downstat == FAILURE)
+        if (t + MIN_SPACE >= free_space ())
         {
-            if (t + MIN_SPACE >= free_space ())
-            {
-                downstat = NOSPACE;
-                return 1;
-            }
+            downstat = NOSPACE;
+            return 1;
         }
+
         if (msg_pb)
         {
             if (pdf_dl_req) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
@@ -829,17 +822,27 @@ static void load_catalogue (tf_status success)
     hide_message ();
 
     gtk_widget_show (contrib_btn);
-    if (success == SUCCESS && read_data_file (catpath))
+
+    switch (success)
     {
-        gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
-        system (cmd);
-        g_free (cmd);
-        return;
+        case SUCCESS :  if (read_data_file (catpath))
+                        {
+                            gchar *cmd = g_strdup_printf ("cp %s %s", catpath, cbpath);
+                            system (cmd);
+                            g_free (cmd);
+                            return;
+                        }
+                        message (_("Downloaded catalogue not valid"), TRUE);
+                        break;
+
+        case NOSPACE :  message (_("Disk full - unable to download updates"), TRUE);
+                        break;
+
+        case FAILURE :  message (_("Unable to download updates"), TRUE);
+                        break;
     }
-    if (success == NOSPACE) message (_("Disk full - unable to download updates"), TRUE);
-    else if (success == SUCCESS || success == FAILURE) message (_("Unable to download updates"), TRUE);
-    if (read_data_file (cbpath)) return;
-    read_data_file (PACKAGE_DATA_DIR "/cat.xml");
+
+    if (success != CANCELLED) read_data_file (cbpath);
 }
 
 static void load_contrib_catalogue (tf_status success)
