@@ -822,8 +822,6 @@ static void load_catalogue (tf_status success)
 {
     hide_message ();
 
-    gtk_widget_show (contrib_btn);
-
     switch (success)
     {
         case SUCCESS :  if (read_data_file (catpath))
@@ -852,8 +850,6 @@ static void load_catalogue (tf_status success)
 static void load_contrib_catalogue (tf_status success)
 {
     hide_message ();
-
-    gtk_widget_hide (contrib_btn);
 
     switch (success)
     {
@@ -909,6 +905,7 @@ static int read_data_file (char *path)
     size_t nchars = 0;
     GtkTreeIter entry;
     int i, category = -1, in_item = FALSE, downloaded, counts[NUM_CATS], count = 0;
+    gboolean locked_items = FALSE;
 
     gtk_list_store_clear (items);
 
@@ -962,6 +959,7 @@ static int read_data_file (char *path)
                         }
                         else if (filepath)
                         {
+                            locked_items = TRUE;
                             downloaded = FILE_LOCKED;
                             lpath = get_system_path (filepath);
                             if (access (lpath, F_OK) != -1) downloaded = FILE_DOWNLOADED;
@@ -1007,6 +1005,8 @@ static int read_data_file (char *path)
         g_free (lang);
     }
     else return 0;
+
+    if (locked_items) gtk_widget_show (contrib_btn);
 
     // hide any tab with no entries
     for (i = 0; i < NUM_CATS; i++)
@@ -1486,6 +1486,7 @@ int main (int argc, char *argv[])
     g_signal_connect (search_box, "search-changed", G_CALLBACK (search_update), NULL);
 
     gtk_widget_show_all (main_dlg);
+    gtk_widget_hide (contrib_btn);
     msg_dlg = NULL;
     msg_pb = NULL;
 
