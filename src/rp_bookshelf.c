@@ -62,8 +62,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SUBSCRIBE_URL   "https://magazine.raspberrypi.com/TBD"
 
-#define CATALOGUE_URL   "https://magpi.raspberrypi.com/bookshelf.xml"
-#define CONTRIBUTOR_URL "https://magpi.raspberrypi.com/contributor.xml"
+#define CATALOGUE_URL   "https://magazine-staging.raspberrypi.com/bookshelf.xml"
+#define CONTRIBUTOR_URL "https://magazine.raspberrypi.com/bookshelf/contributor.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/Bookshelf/"
 #define GUIDE_PATH      "/usr/share/userguide/"
@@ -447,7 +447,11 @@ static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status
     curl_easy_setopt (http_handle, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt (http_handle, CURLOPT_XFERINFOFUNCTION, progress_func);
     curl_easy_setopt (http_handle, CURLOPT_FAILONERROR, 1L);
-    if (auth_key) curl_easy_setopt (http_handle, CURLOPT_XOAUTH2_BEARER, auth_key);
+    if (auth_key)
+    {
+        curl_easy_setopt (http_handle, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
+        curl_easy_setopt (http_handle, CURLOPT_XOAUTH2_BEARER, auth_key);
+    }
 
     curl_multi_add_handle (multi_handle, http_handle);
     if (curl_multi_perform (multi_handle, &still_running) == CURLM_OK && still_running)
