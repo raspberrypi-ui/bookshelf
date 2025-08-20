@@ -1010,7 +1010,7 @@ static int read_data_file (char *path)
     }
     else return 0;
 
-    if (locked_items) gtk_widget_show (contrib_btn);
+    gtk_widget_set_visible (contrib_btn, locked_items);
 
     // hide any tab with no entries
     for (i = 0; i < NUM_CATS; i++)
