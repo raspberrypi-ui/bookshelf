@@ -60,7 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAGPI_URL       "https://magazine.raspberrypi.com/issues"
 #define BOOKS_URL       "https://magazine.raspberrypi.com/books"
 
-#define SUBSCRIBE_URL   "https://magazine.raspberrypi.com/TBD"
+#define SUBSCRIBE_URL   "https://magazine.raspberrypi.com/bookshelf/link"
 
 #define CATALOGUE_URL   "https://magazine-staging.raspberrypi.com/bookshelf.xml"
 #define CONTRIBUTOR_URL "https://magazine.raspberrypi.com/bookshelf/contributor.xml"
