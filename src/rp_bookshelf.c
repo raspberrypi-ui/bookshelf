@@ -905,7 +905,7 @@ static void get_param (char *linebuf, char *name, char *lang, char **dest)
 
 static int read_data_file (char *path)
 {
-    char *linebuf = NULL, *lang, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL, *filepath = NULL, *tr_title = NULL, *tr_desc = NULL, *tr_covpath = NULL, *tr_pdfpath = NULL, *lpath;
+    char *linebuf = NULL, *lang, *title = NULL, *desc = NULL, *covpath = NULL, *pdfpath = NULL, *filepath = NULL, *tr_title = NULL, *tr_desc = NULL, *tr_covpath = NULL, *tr_pdfpath = NULL, *tr_filepath = NULL, *lpath;
     size_t nchars = 0;
     GtkTreeIter entry;
     int i, category = -1, in_item = FALSE, downloaded, counts[NUM_CATS], count = 0;
@@ -951,6 +951,11 @@ static int read_data_file (char *path)
                             g_free (pdfpath);
                             pdfpath = tr_pdfpath;
                         }
+                        if (tr_filepath)
+                        {
+                            g_free (filepath);
+                            filepath = tr_filepath;
+                        }
                         downloaded = FILE_AVAILABLE;
                         if (pdfpath)
                         {
@@ -983,7 +988,7 @@ static int read_data_file (char *path)
                     g_free (covpath);
                     g_free (pdfpath);
                     title = desc = covpath = pdfpath = NULL;
-                    tr_title = tr_desc = tr_covpath = tr_pdfpath = NULL;
+                    tr_title = tr_desc = tr_covpath = tr_pdfpath = tr_filepath = NULL;
                     counts[category]++;
                     count++;
                 }
@@ -996,6 +1001,7 @@ static int read_data_file (char *path)
                 get_param (linebuf, "DESC", lang, &tr_desc);
                 get_param (linebuf, "COVER", lang, &tr_covpath);
                 get_param (linebuf, "PDF", lang, &tr_pdfpath);
+                get_param (linebuf, "FILE", lang, &tr_filepath);
             }   
             else
             {
