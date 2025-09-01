@@ -1,3 +1,9 @@
+rp-bookshelf (1.2) trixie; urgency=medium
+
+  * Add contributor features
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 01 Sep 2025 14:59:58 +0100
+
 rp-bookshelf (1.1) trixie; urgency=medium
 
   * Fix dependencies
