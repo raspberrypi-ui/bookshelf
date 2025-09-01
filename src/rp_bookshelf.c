@@ -351,7 +351,7 @@ static gboolean save_access_key (char *url)
         g_free (path);
         if (fp)
         {
-            fprintf (fp, furl + 31);
+            fprintf (fp, "%s", furl + 31);
             fclose (fp);
             return TRUE;
         }
