@@ -62,7 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SUBSCRIBE_URL   "https://magazine.raspberrypi.com/bookshelf/link"
 
-#define CATALOGUE_URL   "https://magazine-staging.raspberrypi.com/bookshelf.xml"
+#define CATALOGUE_URL   "https://magazine.raspberrypi.com/bookshelf.xml"
 #define CONTRIBUTOR_URL "https://magazine.raspberrypi.com/bookshelf/contributor.xml"
 #define CACHE_PATH      "/.cache/bookshelf/"
 #define PDF_PATH        "/Bookshelf/"
@@ -1497,6 +1497,7 @@ int main (int argc, char *argv[])
 
     gtk_widget_show_all (main_dlg);
     gtk_widget_hide (contrib_btn);
+    gtk_widget_hide (web_btn);
     msg_dlg = NULL;
     msg_pb = NULL;
 
