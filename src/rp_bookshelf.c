@@ -123,7 +123,7 @@ static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_ok, *msg_cancel;
 
 /* Preloaded default pixbufs */
 
-static GdkPixbuf *cloud, *grey, *nocover, *nodl, *newcorn, *padlock;
+static GdkPixbuf *cloud, *grey, *nocover, *nodl, *newcorn, *padlock, *nolock;
 
 /* Data store for icon grid */
 
@@ -980,7 +980,7 @@ static int read_data_file (char *path)
                         gtk_list_store_append (items, &entry);
                         gtk_list_store_set (items, &entry, ITEM_CATEGORY, category, ITEM_TITLE, title,
                             ITEM_DESC, desc, ITEM_PDFPATH, pdfpath ? pdfpath : filepath, ITEM_COVPATH, covpath,
-                            ITEM_COVER, downloaded ? nocover : nodl, ITEM_DOWNLOADED, downloaded, -1);
+                            ITEM_COVER, downloaded ? (downloaded == FILE_LOCKED ? nolock : nocover) : nodl, ITEM_DOWNLOADED, downloaded, -1);
                     }
                     in_item = FALSE;
                     g_free (title);
@@ -1434,6 +1434,8 @@ int main (int argc, char *argv[])
     nodl = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
     i = gdk_pixbuf_get_width (nodl);
     gdk_pixbuf_composite (cloud, nodl, (i - 64) / 2, 32, 64, 64, (i - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
+    nolock = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
+    gdk_pixbuf_composite (padlock, nolock, (i - 64) / 2, 32, 64, 64, (i - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
 
     // build the UI
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/rp_bookshelf.ui");
