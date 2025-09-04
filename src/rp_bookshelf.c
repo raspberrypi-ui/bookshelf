@@ -212,6 +212,7 @@ static void load_contrib_catalogue (tf_status success);
 static void get_param (char *linebuf, char *name, char *lang, char **dest);
 static int read_data_file (char *path);
 static gboolean match_category (GtkTreeModel *model, GtkTreeIter *iter, gpointer data);
+static void search_update (GtkSearchEntry *self, gpointer data);
 static void symlink_user_guide (void);
 static gboolean ok_clicked (GtkButton *button, gpointer data);
 static gboolean cancel_clicked (GtkButton *button, gpointer data);
@@ -219,13 +220,12 @@ static gboolean download_fallback (GtkButton *button, gpointer data);
 static void message (char *msg, int wait);
 static void hide_message (void);
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
-static void book_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data);
 static void handle_menu_open (GtkWidget *widget, gpointer user_data);
 static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data);
 static void create_cs_menu (GdkEvent *event);
 static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
-static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data);
 static void refresh_icons (void);
+static gint pub_sort (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b, gpointer user_data);
 static void web_link (GtkButton* btn, gpointer ptr);
 static void contribute (GtkButton* btn, gpointer ptr);
 static void close_prog (GtkButton* btn, gpointer ptr);
@@ -1062,17 +1062,7 @@ static void search_update (GtkSearchEntry *self, gpointer data)
 
     for (i = 0; i < NUM_CATS; i++)
     {
-        if (i == CAT_BOOKS)
-        {
-            gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (
-                gtk_tree_model_sort_get_model (GTK_TREE_MODEL_SORT (
-                gtk_icon_view_get_model (GTK_ICON_VIEW (item_ivs[i]))))));
-        }
-        else
-        {
-            gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (
-                gtk_icon_view_get_model (GTK_ICON_VIEW (item_ivs[i]))));
-        }
+        gtk_tree_model_filter_refilter (GTK_TREE_MODEL_FILTER (gtk_icon_view_get_model (GTK_ICON_VIEW (item_ivs[i]))));
     }
 }
 
@@ -1207,19 +1197,10 @@ static void hide_message (void)
 
 static void item_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
 {
-    GtkTreeIter fitem;
-    gtk_tree_model_get_iter (GTK_TREE_MODEL (user_data), &fitem, path);
-    gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (user_data), &selitem, &fitem);
-
-    pdf_selected ();
-}
-
-static void book_selected (GtkIconView *iconview, GtkTreePath *path, gpointer user_data)
-{
     GtkTreeIter fitem, sitem;
-    gtk_tree_model_get_iter (GTK_TREE_MODEL (sorted), &sitem, path);
-    gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (sorted), &fitem, &sitem);
-    gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (filtered[CAT_BOOKS]), &selitem, &fitem);
+    gtk_tree_model_get_iter (GTK_TREE_MODEL (user_data), &fitem, path);
+    gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (user_data), &sitem, &fitem);
+    gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (sorted), &selitem, &sitem);
 
     pdf_selected ();
 }
@@ -1294,38 +1275,18 @@ static void create_cs_menu (GdkEvent *event)
 
 static gboolean icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data)
 {
-    GtkTreeIter fitem;
-
-    if (event->button == 3)
-    {
-        GtkTreePath *path = gtk_icon_view_get_path_at_pos (GTK_ICON_VIEW (user_data), event->x, event->y);
-        if (path)
-        {
-            GtkTreeModel *model = gtk_icon_view_get_model (GTK_ICON_VIEW (user_data));
-            if (model)
-            {
-                gtk_tree_model_get_iter (model, &fitem, path);
-                gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (model), &selitem, &fitem);
-                create_cs_menu ((GdkEvent *) event);
-            }
-        }
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static gboolean book_icon_clicked (GtkWidget *wid, GdkEventButton *event, gpointer user_data)
-{
     GtkTreeIter fitem, sitem;
+    GtkTreeModel *ivm;
 
     if (event->button == 3)
     {
         GtkTreePath *path = gtk_icon_view_get_path_at_pos (GTK_ICON_VIEW (user_data), event->x, event->y);
         if (path)
         {
-            gtk_tree_model_get_iter (sorted, &sitem, path);
-            gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (sorted), &fitem, &sitem);
-            gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (filtered[CAT_BOOKS]), &selitem, &fitem);
+            ivm = gtk_icon_view_get_model (GTK_ICON_VIEW (user_data));
+            gtk_tree_model_get_iter (ivm, &fitem, path);
+            gtk_tree_model_filter_convert_iter_to_child_iter (GTK_TREE_MODEL_FILTER (ivm), &sitem, &fitem);
+            gtk_tree_model_sort_convert_iter_to_child_iter (GTK_TREE_MODEL_SORT (sorted), &selitem, &sitem);
             create_cs_menu ((GdkEvent *) event);
         }
         return TRUE;
@@ -1337,6 +1298,34 @@ static void refresh_icons (void)
 {
     int i;
     for (i = 0; i < NUM_CATS; i++) gtk_widget_queue_draw (item_ivs[i]);
+}
+
+static gint pub_sort (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b, gpointer user_data)
+{
+    int cata, catb, issuea, issueb, res;
+    char *titlea, *titleb;
+
+    gtk_tree_model_get (model, a, ITEM_CATEGORY, &cata, ITEM_TITLE, &titlea, -1);
+    gtk_tree_model_get (model, b, ITEM_CATEGORY, &catb, ITEM_TITLE, &titleb, -1);
+
+    if (!titlea || !titleb) res = 0;
+    else if (cata != catb)
+    {
+        if (cata == CAT_MAGPI) res = -1;
+        else res = 1;
+    }
+    else if (cata == CAT_MAGPI)
+    {
+        issuea = issueb = 0;
+        sscanf (titlea, "Issue %d", &issuea);
+        sscanf (titleb, "Issue %d", &issueb);
+        res = issueb - issuea;
+    }
+    else res = strcasecmp (titlea, titleb);
+
+    g_free (titlea);
+    g_free (titleb);
+    return res;
 }
 
 static void web_link (GtkButton* btn, gpointer ptr)
@@ -1449,20 +1438,17 @@ int main (int argc, char *argv[])
     items_nb = (GtkWidget *) gtk_builder_get_object (builder, "notebook1");
     search_box = (GtkWidget *) gtk_builder_get_object (builder, "srch");
 
-    // create list store
+    // create and sort list store
     items = gtk_list_store_new (7, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, GDK_TYPE_PIXBUF);
+    sorted = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL (items));
+    gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sorted), ITEM_TITLE, GTK_SORT_ASCENDING);
+    gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (sorted), ITEM_TITLE, pub_sort, NULL, NULL);
 
     // create filtered lists and set up icon views
     for (i = 0; i < NUM_CATS; i++)
     {
-        filtered[i] = gtk_tree_model_filter_new (GTK_TREE_MODEL (items), NULL);
+        filtered[i] = gtk_tree_model_filter_new (GTK_TREE_MODEL (sorted), NULL);
         gtk_tree_model_filter_set_visible_func (GTK_TREE_MODEL_FILTER (filtered[i]), (GtkTreeModelFilterVisibleFunc) match_category, (gpointer) i, NULL);
-        if (i == CAT_BOOKS)
-        {
-            sorted = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL (filtered[i]));
-            gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (sorted), ITEM_TITLE, GTK_SORT_ASCENDING);
-        }
-
         gtk_icon_view_set_tooltip_column (GTK_ICON_VIEW (item_ivs[i]), ITEM_DESC);
         layout = GTK_CELL_LAYOUT (item_ivs[i]);
 
@@ -1477,18 +1463,9 @@ int main (int argc, char *argv[])
         gtk_cell_layout_pack_start (layout, renderer, FALSE);
         gtk_cell_layout_add_attribute (layout, renderer, "markup", ITEM_TITLE);
 
-        if (i == CAT_BOOKS)
-        {
-            gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), sorted);
-            g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (book_selected), NULL);
-            g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (book_icon_clicked), item_ivs[i]);
-        }
-        else
-        {
-            gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), filtered[i]);
-            g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (item_selected), filtered[i]);
-            g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (icon_clicked), item_ivs[i]);
-        }
+        gtk_icon_view_set_model (GTK_ICON_VIEW (item_ivs[i]), filtered[i]);
+        g_signal_connect (item_ivs[i], "item-activated", G_CALLBACK (item_selected), filtered[i]);
+        g_signal_connect (item_ivs[i], "button-press-event", G_CALLBACK (icon_clicked), item_ivs[i]);
     }
 
     g_signal_connect (web_btn, "clicked", G_CALLBACK (web_link), NULL);
