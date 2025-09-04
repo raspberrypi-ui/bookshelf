@@ -1,3 +1,9 @@
+rp-bookshelf (1.4) trixie; urgency=medium
+
+  * Sort all items, not just books, to work around GTK bugs
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 04 Sep 2025 14:30:46 +0100
+
 rp-bookshelf (1.3) trixie; urgency=medium
 
   * Show padlock on icons for which cover not yet downloaded
