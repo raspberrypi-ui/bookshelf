@@ -1,3 +1,9 @@
+rp-bookshelf (1.5) trixie; urgency=medium
+
+  * Ensure title case is used consistently
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 05 Sep 2025 11:12:19 +0100
+
 rp-bookshelf (1.4) trixie; urgency=medium
 
   * Sort all items, not just books, to work around GTK bugs
