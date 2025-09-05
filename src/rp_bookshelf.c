@@ -187,6 +187,7 @@ static unsigned long int get_val (char *cmd);
 static char *get_string (char *cmd);
 static curl_off_t free_space (void);
 static gboolean save_access_key (char *url);
+static void entitle (char *buffer);
 static void init_dbus (void);
 static void close_dbus (void);
 static void name_acquired (GDBusConnection *connection, const gchar *name, gpointer);
@@ -357,6 +358,21 @@ static gboolean save_access_key (char *url)
         }
     }
     return FALSE;
+}
+
+/* entitle - crude title case conversion algorithm */
+
+static void entitle (char *buffer)
+{
+    char *ptr = buffer + 1;
+    while (*ptr++)
+    {
+        if (*(ptr - 1) != ' ') continue;
+        if (*ptr < 'a' || *ptr > 'z') continue;
+        if (*(ptr + 1) == ' ' || *(ptr + 2) == ' ' || *(ptr + 3) == ' ' || *(ptr + 4) == ' ') continue;
+        *ptr -= ('a' - 'A');
+        if (*(ptr + 4) == 0) return;
+    }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -936,6 +952,7 @@ static int read_data_file (char *path)
                             g_free (title);
                             title = tr_title;
                         }
+                        else entitle (title);
                         if (tr_desc)
                         {
                             g_free (desc);
