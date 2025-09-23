@@ -1494,6 +1494,7 @@ int main (int argc, char *argv[])
     gtk_widget_show_all (main_dlg);
     gtk_widget_hide (contrib_btn);
     gtk_widget_hide (web_btn);
+    gtk_widget_grab_focus (close_btn);
     msg_dlg = NULL;
     msg_pb = NULL;
 

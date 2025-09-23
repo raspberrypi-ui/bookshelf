@@ -1,3 +1,9 @@
+rp-bookshelf (1.6) trixie; urgency=medium
+
+  * Set initial focus to close button
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 23 Sep 2025 11:55:20 +0100
+
 rp-bookshelf (1.5) trixie; urgency=medium
 
   * Ensure title case is used consistently
