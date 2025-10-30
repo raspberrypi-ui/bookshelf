@@ -199,6 +199,7 @@ static gboolean curl_poll (gpointer data);
 static void finish_curl_download (void);
 static int progress_func (GtkWidget *bar, curl_off_t t, curl_off_t d, curl_off_t ultotal, curl_off_t ulnow);
 static GdkPixbuf *get_cover (const char *filename);
+static void overlay_icon (GdkPixbuf **cover, GdkPixbuf *icon);
 static void update_cover_entry (char *lpath, int dl, gboolean new);
 static gboolean find_cover_for_item (gpointer data);
 static void image_download_done (tf_status success);
@@ -566,19 +567,34 @@ static int progress_func (GtkWidget *bar, curl_off_t t, curl_off_t d, curl_off_t
 static GdkPixbuf *get_cover (const char *filename)
 {
     GdkPixbuf *pb, *spb;
-    int w, h;
-    
+    int w, h, scale;
+
+    scale = gtk_widget_get_scale_factor (main_dlg);
+
     pb = gdk_pixbuf_new_from_file (filename, NULL);
     if (!pb) pb = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
-
     h = gdk_pixbuf_get_height (pb);
-    if (h == COVER_SIZE) return pb;
+    if (h == COVER_SIZE * scale) return pb;
     w = gdk_pixbuf_get_width (pb);
 
-    spb = gdk_pixbuf_scale_simple (pb, ((w > h) ? COVER_SIZE : COVER_SIZE * w / h), 
-        ((w > h) ? COVER_SIZE * h / w : COVER_SIZE), GDK_INTERP_BILINEAR);
+    spb = gdk_pixbuf_scale_simple (pb, ((w > h) ? COVER_SIZE : COVER_SIZE * w / h) * scale,
+        ((w > h) ? COVER_SIZE * h / w : COVER_SIZE) * scale, GDK_INTERP_BILINEAR);
     g_object_unref (pb);
     return spb;
+}
+
+/* overlay_icon - superimpose the padlock or cloud icon */
+
+static void overlay_icon (GdkPixbuf **cover, GdkPixbuf *icon)
+{
+    int w, h, sco, osize, scale;
+
+    scale = gtk_widget_get_scale_factor (main_dlg);
+    w = gdk_pixbuf_get_width (*cover);
+    h = gdk_pixbuf_get_height (*cover);
+    osize = gdk_pixbuf_get_width (icon);    // assume overlays are square...
+    sco = COVER_SIZE * scale / 2;           // size to which overlay will be scaled; half the size of the cover
+    gdk_pixbuf_composite (icon, *cover, (w - sco) / 2, (h - sco) / 2, sco, sco, (w - sco) / 2, (h - sco) / 2, (float) sco / osize, (float) sco / osize, GDK_INTERP_BILINEAR, 255);
 }
 
 /* update_cover_entry - uses the cover at lpath to update the cover info for covitem */
@@ -586,7 +602,9 @@ static GdkPixbuf *get_cover (const char *filename)
 static void update_cover_entry (char *lpath, int dl, gboolean new)
 {
     GdkPixbuf *cover;
-    int w, h;
+    int w, h, scale;
+
+    scale = gtk_widget_get_scale_factor (main_dlg);
 
     cover = get_cover (lpath);
     w = gdk_pixbuf_get_width (cover);
@@ -595,18 +613,24 @@ static void update_cover_entry (char *lpath, int dl, gboolean new)
     switch (dl)
     {
         case FILE_AVAILABLE:
-            gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-            gdk_pixbuf_composite (cloud, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
+            gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, scale, scale, GDK_INTERP_BILINEAR, 128);
+            overlay_icon (&cover, cloud);
             break;
 
         case FILE_LOCKED:
-            gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-            gdk_pixbuf_composite (padlock, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
+            gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, scale, scale, GDK_INTERP_BILINEAR, 128);
+            overlay_icon (&cover, padlock);
             break;
 
         default : break;
     }
-    if (new) gdk_pixbuf_composite (newcorn, cover, w - 32, 0, 32, 32, w - 32, 0, 1, 1, GDK_INTERP_BILINEAR, 255);
+    if (new)
+    {
+        int cs = gdk_pixbuf_get_width (newcorn);
+        int sco = COVER_SIZE * scale / 4;           // size to which overlay will be scaled; half the size of the cover
+
+        gdk_pixbuf_composite (newcorn, cover, w - sco, 0, sco, sco, w - sco, 0, (float) sco / cs, (float) sco / cs, GDK_INTERP_BILINEAR, 255);
+    }
 
     gtk_list_store_set (items, &covitem, ITEM_COVER, cover, -1);
     g_object_unref (cover);
@@ -1231,7 +1255,9 @@ static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data)
 {
     gchar *cpath, *ppath, *clpath, *plpath;
     GdkPixbuf *cover;
-    int w, h;
+    int w, h, scale;
+
+    scale = gtk_widget_get_scale_factor (main_dlg);
 
     gtk_tree_model_get (GTK_TREE_MODEL (items), &selitem, ITEM_COVPATH, &cpath, ITEM_PDFPATH, &ppath, -1);
     plpath = get_local_path (ppath, PDF_PATH);
@@ -1242,8 +1268,8 @@ static void handle_menu_delete_file (GtkWidget *widget, gpointer user_data)
     cover = get_cover (clpath);
     w = gdk_pixbuf_get_width (cover);
     h = gdk_pixbuf_get_height (cover);
-    gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, 1, 1, GDK_INTERP_BILINEAR, 128);
-    gdk_pixbuf_composite (strstr (ppath, "https://") ? cloud : padlock, cover, (w - 64) / 2, 32, 64, 64, (w - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
+    gdk_pixbuf_composite (grey, cover, 0, 0, w, h, 0, 0, scale, scale, GDK_INTERP_BILINEAR, 128);
+    overlay_icon (&cover, strstr (ppath, "https://") ? cloud : padlock);
 
     gtk_list_store_set (items, &selitem, ITEM_COVER, cover, ITEM_DOWNLOADED, strstr (ppath, "https://") ? FILE_AVAILABLE : FILE_LOCKED, -1);
     refresh_icons ();
@@ -1399,6 +1425,8 @@ int main (int argc, char *argv[])
     GtkBuilder *builder;
     GtkCellLayout *layout;
     GtkCellRenderer *renderer;
+    GdkPixbuf *tmppb;
+    int w, h, scale;
     long i;
 
     if (argc > 1) url_arg = g_strdup (argv[1]);
@@ -1432,17 +1460,6 @@ int main (int argc, char *argv[])
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
-    cloud = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/cloud.png", NULL);
-    grey = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/grey.png", NULL);
-    padlock = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/padlock.png", NULL);
-    newcorn = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/new.png", NULL);
-    nocover = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
-    nodl = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
-    i = gdk_pixbuf_get_width (nodl);
-    gdk_pixbuf_composite (cloud, nodl, (i - 64) / 2, 32, 64, 64, (i - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
-    nolock = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
-    gdk_pixbuf_composite (padlock, nolock, (i - 64) / 2, 32, 64, 64, (i - 64) / 2, 32, 1, 1, GDK_INTERP_BILINEAR, 255);
-
     // build the UI
     builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/rp_bookshelf.ui");
 
@@ -1454,6 +1471,30 @@ int main (int argc, char *argv[])
     contrib_btn = (GtkWidget *) gtk_builder_get_object (builder, "button_contrib");
     items_nb = (GtkWidget *) gtk_builder_get_object (builder, "notebook1");
     search_box = (GtkWidget *) gtk_builder_get_object (builder, "srch");
+
+    // load icons
+    cloud = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/cloud.png", NULL);
+    grey = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/grey.png", NULL);
+    padlock = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/padlock.png", NULL);
+    newcorn = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/new.png", NULL);
+    nocover = gdk_pixbuf_new_from_file (PACKAGE_DATA_DIR "/nocover.png", NULL);
+
+    scale = gtk_widget_get_scale_factor (main_dlg);
+    h = gdk_pixbuf_get_height (nocover);
+    if (h != COVER_SIZE * scale)
+    {
+        w = gdk_pixbuf_get_width (nocover);
+        tmppb = gdk_pixbuf_scale_simple (nocover, ((w > h) ? COVER_SIZE : COVER_SIZE * w / h) * scale,
+            ((w > h) ? COVER_SIZE * h / w : COVER_SIZE) * scale, GDK_INTERP_BILINEAR);
+        g_object_unref (nocover);
+        nocover = tmppb;
+    }
+
+    nodl = gdk_pixbuf_copy (nocover);
+    overlay_icon (&nodl, cloud);
+
+    nolock = gdk_pixbuf_copy (nocover);
+    overlay_icon (&nolock, padlock);
 
     // create and sort list store
     items = gtk_list_store_new (7, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, GDK_TYPE_PIXBUF);
@@ -1471,6 +1512,10 @@ int main (int argc, char *argv[])
 
         renderer = gtk_cell_renderer_pixbuf_new ();
         gtk_cell_renderer_set_fixed_size (renderer, CELL_WIDTH, -1);
+        GValue val = G_VALUE_INIT;
+        g_value_init (&val, G_TYPE_INT);
+        g_value_set_int (&val, gtk_widget_get_scale_factor (main_dlg));
+        g_object_set_property (G_OBJECT (renderer), "scale", &val);
         gtk_cell_layout_pack_start (layout, renderer, FALSE);
         gtk_cell_layout_add_attribute (layout, renderer, "pixbuf", ITEM_COVER);
 
