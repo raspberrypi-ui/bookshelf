@@ -1,3 +1,9 @@
+rp-bookshelf (1.7) trixie; urgency=medium
+
+  * Add larger icons
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 03 Nov 2025 13:40:50 +0000
+
 rp-bookshelf (1.6) trixie; urgency=medium
 
   * Set initial focus to close button
