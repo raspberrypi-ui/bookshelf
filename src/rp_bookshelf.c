@@ -784,9 +784,10 @@ static void get_pending_pdf (void)
 /* Catalogue management                                                       */
 /*----------------------------------------------------------------------------*/
 
-#define N_REMAPS 0
+#define N_REMAPS 1
 
 const char *titlemap[N_REMAPS][2] = {
+    {"Raspberry Pi Beginner's Guide 5th edition",   NULL}
 };
 
 static void remap_title (char **title)
