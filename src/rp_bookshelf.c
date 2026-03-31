@@ -412,9 +412,8 @@ static void name_lost (GDBusConnection *connection, const gchar *name, gpointer)
     proxy = g_dbus_proxy_new_sync (connection, G_DBUS_PROXY_FLAGS_NONE, NULL, DBUS_BUS_NAME, DBUS_OBJECT_PATH, DBUS_INTERFACE_NAME, NULL, NULL);
     var = g_variant_new ("(s)", url_arg);
     g_dbus_proxy_call_sync (proxy, "NewURL", var, G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL);
-    g_dbus_connection_close_sync (connection, NULL, NULL);
 
-    g_free (var);
+    g_dbus_connection_close_sync (connection, NULL, NULL);
     g_object_unref (proxy);
     exit (0);
 }
