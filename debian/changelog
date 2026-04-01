@@ -1,3 +1,9 @@
+rp-bookshelf (1.9) trixie; urgency=medium
+
+  * Add activation
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 01 Apr 2026 13:21:59 +0100
+
 rp-bookshelf (1.8) trixie; urgency=medium
 
   * Filter 5th edition of beginner's guide
