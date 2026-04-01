@@ -50,6 +50,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <curl/curl.h>
 
+#include "activate.h"
+
 /*----------------------------------------------------------------------------*/
 /* Macros                                                                     */
 /*----------------------------------------------------------------------------*/
@@ -105,12 +107,6 @@ typedef enum {
     FILE_LOCKED
 } file_status;
 
-/* DBus */
-
-#define DBUS_BUS_NAME       "com.raspberrypi.bookshelf"
-#define DBUS_OBJECT_PATH    "/com/raspberrypi/bookshelf"
-#define DBUS_INTERFACE_NAME "com.raspberrypi.bookshelf"
-
 /*----------------------------------------------------------------------------*/
 /* Globals                                                                    */
 /*----------------------------------------------------------------------------*/
@@ -162,21 +158,6 @@ tf_status downstat;
 gboolean cover_dl, pdf_dl_req;
 gulong draw_id;
 
-/* DBus */
-
-static guint busid;
-
-static GDBusNodeInfo *introspection_data = NULL;
-
-static const gchar introspection_xml[] =
-  "<node>"
-  "  <interface name='" DBUS_INTERFACE_NAME "'>"
-  "    <method name='NewURL'>"
-  "      <arg type='s' name='url' direction='in'/>"
-  "    </method>"
-  "  </interface>"
-  "</node>";
-
 /*----------------------------------------------------------------------------*/
 /* Prototypes                                                                 */
 /*----------------------------------------------------------------------------*/
@@ -188,12 +169,6 @@ static char *get_string (char *cmd);
 static curl_off_t free_space (void);
 static gboolean save_access_key (char *url);
 static void entitle (char *buffer);
-static void init_dbus (void);
-static void close_dbus (void);
-static void name_acquired (GDBusConnection *connection, const gchar *name, gpointer);
-static void name_lost (GDBusConnection *connection, const gchar *name, gpointer);
-static void handle_method_call (GDBusConnection *, const gchar*, const gchar*, const gchar*,
-    const gchar *method_name, GVariant *parameters, GDBusMethodInvocation *invocation, gpointer);
 static void start_curl_download (char *url, char *file, void (*end_fn)(tf_status success), char *auth_key);
 static gboolean curl_poll (gpointer data);
 static void finish_curl_download (void);
@@ -379,58 +354,18 @@ static void entitle (char *buffer)
 /* DBus interface                                                             */
 /*----------------------------------------------------------------------------*/
 
-static const GDBusInterfaceVTable interface_vtable =
+GVariant *dbus_get_args (void)
 {
-    handle_method_call, NULL, NULL, { 0 }
-};
-
-static void init_dbus (void)
-{
-    busid = g_bus_own_name (G_BUS_TYPE_SESSION, DBUS_BUS_NAME, G_BUS_NAME_OWNER_FLAGS_NONE,
-        NULL, name_acquired, name_lost, NULL, NULL);
+    return g_variant_new ("(s)", url_arg);
 }
 
-static void close_dbus (void)
-{
-    g_bus_unown_name (busid);
-}
-
-static void name_acquired (GDBusConnection *connection, const gchar *name, gpointer)
-{
-    /* name not on DBus, so this is the first instance - set up handler for NewURL function */
-    introspection_data = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
-    g_dbus_connection_register_object (connection, DBUS_OBJECT_PATH, introspection_data->interfaces[0],
-        &interface_vtable, NULL, NULL, NULL);
-}
-
-static void name_lost (GDBusConnection *connection, const gchar *name, gpointer)
-{
-    GDBusProxy *proxy;
-    GVariant *var;
-
-    /* name already on DBus, so application already running - call the NewURL function on the existing instance and then exit */
-    proxy = g_dbus_proxy_new_sync (connection, G_DBUS_PROXY_FLAGS_NONE, NULL, DBUS_BUS_NAME, DBUS_OBJECT_PATH, DBUS_INTERFACE_NAME, NULL, NULL);
-    var = g_variant_new ("(s)", url_arg);
-    g_dbus_proxy_call_sync (proxy, "NewURL", var, G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL);
-
-    g_dbus_connection_close_sync (connection, NULL, NULL);
-    g_object_unref (proxy);
-    exit (0);
-}
-
-static void handle_method_call (GDBusConnection *, const gchar*, const gchar*, const gchar*,
-    const gchar *method_name, GVariant *parameters, GDBusMethodInvocation *invocation, gpointer)
+void dbus_handle_args (GVariant *args)
 {
     char *key;
 
-    if (g_strcmp0 (method_name, "NewURL") == 0)
-    {
-        g_dbus_method_invocation_return_value (invocation, NULL);
+    g_variant_get (args, "(&s)", &key);
 
-        g_variant_get (parameters, "(&s)", &key);
-        if (save_access_key (key)) download_catalogue ();
-    }
-    else g_dbus_method_invocation_return_dbus_error (invocation, DBUS_INTERFACE_NAME ".Failed", "Unsupported method call");
+    if (save_access_key (key)) download_catalogue ();
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1403,7 +1338,7 @@ int main (int argc, char *argv[])
 
     if (argc > 1) url_arg = g_strdup (argv[1]);
     else url_arg = g_strdup_printf ("<none>");
-    init_dbus ();
+    init_dbus ("bookshelf");
 
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
@@ -1502,6 +1437,8 @@ int main (int argc, char *argv[])
     cover_dl = FALSE;
     pdf_dl_req = FALSE;
     draw_id = g_signal_connect (main_dlg, "draw", G_CALLBACK (first_draw), NULL);
+
+    setup_activate (main_dlg);
 
     gtk_main ();
 
