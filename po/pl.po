@@ -1,0 +1,129 @@
+# Polish translations for rp-bookshelf package
+# Polskie tłumaczenia dla pakietu rp-bookshelf.
+# Copyright (C) 2026 THE rp-bookshelf'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the rp-bookshelf package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: rp-bookshelf\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-19 12:37+0200\n"
+"PO-Revision-Date: 2026-05-19 12:50+0200\n"
+"Last-Translator: Skotniczny <skotniczny@outlook.com>\n"
+"Language-Team: Polish\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+
+#: src/rp_bookshelf.c:695
+msgid "This title is only available to contributors at this time."
+msgstr "Ten tytuł jest obecnie dostępny tylko dla osób wspierających projekt."
+
+#: src/rp_bookshelf.c:713
+msgid "Downloading - please wait..."
+msgstr "Pobieranie – proszę czekać…"
+
+#: src/rp_bookshelf.c:758
+msgid "Unable to download file"
+msgstr "Nie można pobrać pliku"
+
+#: src/rp_bookshelf.c:759
+msgid "Disk full - unable to download file"
+msgstr "Dysk pełny – nie można pobrać pliku"
+
+#. download the non-contributor file
+#: src/rp_bookshelf.c:818 src/rp_bookshelf.c:1152
+msgid "Reading list of publications - please wait..."
+msgstr "Odczytywanie listy publikacji – proszę czekać…"
+
+#: src/rp_bookshelf.c:854 src/rp_bookshelf.c:883
+msgid "Downloaded catalogue not valid"
+msgstr "Pobrany katalog publikacji jest nieprawidłowy"
+
+#: src/rp_bookshelf.c:858 src/rp_bookshelf.c:887
+msgid "Disk full - unable to download updates"
+msgstr "Dysk pełny – nie można pobrać aktualizacji"
+
+#: src/rp_bookshelf.c:862
+msgid "Unable to download updates"
+msgstr "Nie można pobrać aktualizacji"
+
+#: src/rp_bookshelf.c:891
+msgid "Could not validate your subscription. Try logging in again."
+msgstr "Nie można zweryfikować subskrypcji. Spróbuj zalogować się ponownie."
+
+#: src/rp_bookshelf.c:1271
+msgid "Download & open item"
+msgstr "Pobierz i otwórz publikację"
+
+#: src/rp_bookshelf.c:1277
+msgid "Open item"
+msgstr "Otwórz publikację"
+
+#: src/rp_bookshelf.c:1281
+msgid "Delete item"
+msgstr "Usuń publikację"
+
+#: data/rp_bookshelf.ui:8 data/rp-bookshelf.desktop.in:3
+#: data/rp-bookshelf.desktop.in:4
+msgid "Bookshelf"
+msgstr "Bookshelf"
+
+#: data/rp_bookshelf.ui:44
+msgid "Magazines"
+msgstr "Czasopisma"
+
+#: data/rp_bookshelf.ui:71
+msgid "_Books"
+msgstr "_Książki"
+
+#: data/rp_bookshelf.ui:100
+msgid "_Contribute..."
+msgstr "_Wesprzyj…"
+
+#: data/rp_bookshelf.ui:104
+msgid ""
+"Visit the Raspberry Pi Press website to purchase a subscription and unlock "
+"all titles"
+msgstr ""
+"Odwiedź stronę Raspberry Pi Press, aby wykupić subskrypcję i odblokować "
+"wszystkie tytuły"
+
+#: data/rp_bookshelf.ui:115
+msgid "_Website..."
+msgstr "_Strona internetowa…"
+
+#: data/rp_bookshelf.ui:119
+msgid ""
+"Visit the Raspberry Pi Press website to see other titles and to purchase "
+"print copies and subscriptions"
+msgstr ""
+"Odwiedź stronę Raspberry Pi Press, aby zobaczyć inne tytuły oraz kupić "
+"egzemplarze drukowane i subskrypcje"
+
+#: data/rp_bookshelf.ui:144
+msgid "_Close"
+msgstr "_Zamknij"
+
+#: data/rp_bookshelf.ui:148
+msgid "Close the bookshelf application"
+msgstr "Zamknij aplikację Bookshelf"
+
+#: data/rp_bookshelf.ui:206
+msgid "label"
+msgstr ""
+
+#: data/rp_bookshelf.ui:233
+msgid "_Cancel"
+msgstr "_Anuluj"
+
+#: data/rp_bookshelf.ui:248
+msgid "_OK"
+msgstr "_OK"
+
+#: data/rp-bookshelf.desktop.in:5
+msgid "Download and read Raspberry Pi Press publications"
+msgstr "Pobieraj i czytaj publikacje Raspberry Pi Press"
