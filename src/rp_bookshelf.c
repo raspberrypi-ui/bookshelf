@@ -1340,12 +1340,10 @@ int main (int argc, char *argv[])
     else url_arg = g_strdup_printf ("<none>");
     init_dbus ("bookshelf");
 
-#ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
     bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
     textdomain (GETTEXT_PACKAGE);
-#endif
 
     // check that directories exist
     create_dir ("/.cache/");
